@@ -154,6 +154,16 @@ function setWpm(nextWpm) {
   }
 }
 
+function togglePlayback() {
+  if (state.isPlaying) {
+    pause();
+    setStatus("Stopped.");
+    return;
+  }
+
+  start();
+}
+
 function seekToClientX(clientX) {
   if (!state.words.length) {
     setStatus("Load text before seeking.", true);
@@ -184,7 +194,10 @@ function updateProgress() {
 function updateControls() {
   const hasWords = state.words.length > 0 || elements.textInput.value.trim().length > 0;
 
-  elements.startButton.disabled = state.isPlaying || !hasWords;
+  elements.startButton.disabled = !hasWords;
+  elements.startButton.textContent = state.isPlaying ? "Stop" : "Start";
+  elements.startButton.classList.toggle("is-stop", state.isPlaying);
+  elements.startButton.setAttribute("aria-pressed", String(state.isPlaying));
   elements.pauseButton.disabled = !state.isPlaying;
   elements.resetButton.disabled = !state.words.length;
   elements.decreaseSpeed.disabled = state.wpm <= MIN_WPM;
@@ -196,7 +209,7 @@ function setStatus(message, isError = false) {
   elements.statusMessage.classList.toggle("error", isError);
 }
 
-elements.startButton.addEventListener("click", start);
+elements.startButton.addEventListener("click", togglePlayback);
 elements.pauseButton.addEventListener("click", () => {
   pause();
   setStatus("Paused.");

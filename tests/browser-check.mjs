@@ -21,6 +21,8 @@ try {
   );
   await page.click("#startButton");
   await page.waitForTimeout(250);
+  const activeButtonText = await page.textContent("#startButton");
+  const activeButtonClass = await page.getAttribute("#startButton", "class");
   await page.click("#increaseSpeed");
   await page.click("#pauseButton");
 
@@ -42,6 +44,10 @@ try {
 
   if (!beforeSeek || !afterSeek || beforeSeek === afterSeek) {
     throw new Error("Progress did not change after seeking.");
+  }
+
+  if (activeButtonText !== "Stop" || !activeButtonClass?.includes("is-stop")) {
+    throw new Error("Start button did not switch to inverted Stop state.");
   }
 
   if (!wpm?.includes("450")) {

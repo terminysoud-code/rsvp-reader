@@ -161,6 +161,17 @@ button:disabled {
   border-color: var(--accent-strong);
 }
 
+.primary-button.is-stop {
+  background: #fff;
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.primary-button.is-stop:hover {
+  background: #edf7f5;
+  border-color: var(--accent-strong);
+}
+
 .speed-controls {
   display: grid;
   grid-template-columns: 56px minmax(110px, 1fr) 56px;
