@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RSVP Speed Reader</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" type="module"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="reader-panel" aria-label="Speed reading display">
+        <div id="wordDisplay" class="word-display" aria-live="polite">Paste or upload text</div>
+        <div class="progress-section">
+          <button id="progressTrack" class="progress-track" type="button" aria-label="Seek through text">
+            <span id="progressFill" class="progress-fill"></span>
+          </button>
+          <div class="progress-meta">
+            <span id="progressText">Word 0 of 0</span>
+            <span id="percentText">0%</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls-panel" aria-label="Reader controls">
+        <div class="control-row">
+          <button id="startButton" class="primary-button" type="button">Start</button>
+          <button id="pauseButton" type="button">Pause</button>
+          <button id="resetButton" type="button">Reset</button>
+        </div>
+
+        <div class="speed-controls" aria-label="Speed controls">
+          <button id="decreaseSpeed" type="button" aria-label="Decrease speed">-</button>
+          <output id="wpmOutput" for="decreaseSpeed increaseSpeed">400 WPM</output>
+          <button id="increaseSpeed" type="button" aria-label="Increase speed">+</button>
+        </div>
+
+        <label class="input-label" for="textInput">Text</label>
+        <textarea id="textInput" rows="10" placeholder="Paste text here, then press Start."></textarea>
+
+        <div class="file-row">
+          <label class="file-picker" for="fileInput">Upload .txt, .md, or .pdf</label>
+          <input id="fileInput" type="file" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" />
+          <span id="fileName" class="file-name">No file selected</span>
+        </div>
+
+        <p id="statusMessage" class="status-message" role="status"></p>
+      </section>
+    </main>
+  </body>
+</html>

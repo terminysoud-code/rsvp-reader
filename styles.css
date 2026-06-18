@@ -1,0 +1,276 @@
+:root {
+  color-scheme: light;
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --ink: #18202f;
+  --muted: #687386;
+  --line: #d9e0ea;
+  --accent: #146c63;
+  --accent-strong: #0f514a;
+  --warn: #9d3d25;
+  --shadow: 0 20px 50px rgba(29, 41, 57, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 0 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #aeb9c8;
+}
+
+button:focus-visible,
+textarea:focus-visible,
+.file-picker:focus-within {
+  outline: 3px solid rgba(20, 108, 99, 0.24);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.app-shell {
+  width: min(1180px, calc(100vw - 32px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 32px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.reader-panel,
+.controls-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.reader-panel {
+  min-height: 540px;
+  display: grid;
+  grid-template-rows: minmax(280px, 1fr) auto;
+  overflow: hidden;
+}
+
+.word-display {
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  text-align: center;
+  font-size: clamp(48px, 8vw, 104px);
+  line-height: 1.05;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.progress-section {
+  padding: 20px 24px 24px;
+  border-top: 1px solid var(--line);
+}
+
+.progress-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  overflow: hidden;
+  background: #dfe7f0;
+  border: 0;
+  border-radius: 999px;
+}
+
+.progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--accent);
+  transition: width 80ms linear;
+}
+
+.progress-meta,
+.file-row,
+.control-row,
+.speed-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-meta {
+  justify-content: space-between;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.controls-panel {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.primary-button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.primary-button:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.speed-controls {
+  display: grid;
+  grid-template-columns: 56px minmax(110px, 1fr) 56px;
+}
+
+.speed-controls button {
+  padding: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+#wpmOutput {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.input-label {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 230px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  color: var(--ink);
+  background: #fbfcfe;
+  line-height: 1.5;
+}
+
+.file-row {
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.file-picker {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+#fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.file-name {
+  min-width: 0;
+  flex: 1;
+  color: var(--muted);
+  align-self: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-message {
+  min-height: 24px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.status-message.error {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    padding: 18px 0;
+  }
+
+  .reader-panel {
+    min-height: 420px;
+  }
+
+  .controls-panel {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .app-shell {
+    width: min(100vw - 20px, 1180px);
+  }
+
+  .control-row {
+    grid-template-columns: 1fr;
+  }
+
+  .word-display {
+    padding: 22px;
+    font-size: 52px;
+  }
+}

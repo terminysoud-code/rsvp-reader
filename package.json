@@ -1,0 +1,13 @@
+{
+  "name": "rsvp-reader",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 8765",
+    "test:browser": "playwright install chromium && node tests/browser-check.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}
