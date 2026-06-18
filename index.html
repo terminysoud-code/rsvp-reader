@@ -9,43 +9,98 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="reader-panel" aria-label="Speed reading display">
-        <div id="wordDisplay" class="word-display" aria-live="polite">Paste or upload text</div>
-        <div class="progress-section">
-          <button id="progressTrack" class="progress-track" type="button" aria-label="Seek through text">
-            <span id="progressFill" class="progress-fill"></span>
-          </button>
-          <div class="progress-meta">
-            <span id="progressText">Word 0 of 0</span>
-            <span id="percentText">0%</span>
-          </div>
+      <header class="dashboard-bar">
+        <div>
+          <h1>RSVP Speed Reader</h1>
+          <p id="readerCount">1 reader</p>
         </div>
-      </section>
+        <button id="addReaderButton" class="primary-button" type="button">Add reader</button>
+      </header>
 
-      <section class="controls-panel" aria-label="Reader controls">
-        <div class="control-row">
-          <button id="startButton" class="primary-button" type="button">Start</button>
-          <button id="pauseButton" type="button">Pause</button>
-          <button id="resetButton" type="button">Reset</button>
-        </div>
-
-        <div class="speed-controls" aria-label="Speed controls">
-          <button id="decreaseSpeed" type="button" aria-label="Decrease speed">-</button>
-          <output id="wpmOutput" for="decreaseSpeed increaseSpeed">400 WPM</output>
-          <button id="increaseSpeed" type="button" aria-label="Increase speed">+</button>
-        </div>
-
-        <label class="input-label" for="textInput">Text</label>
-        <textarea id="textInput" rows="10" placeholder="Paste text here, then press Start."></textarea>
-
-        <div class="file-row">
-          <label class="file-picker" for="fileInput">Upload .txt, .md, or .pdf</label>
-          <input id="fileInput" type="file" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" />
-          <span id="fileName" class="file-name">No file selected</span>
-        </div>
-
-        <p id="statusMessage" class="status-message" role="status"></p>
-      </section>
+      <section id="readerGrid" class="reader-grid" aria-label="Reader dashboard"></section>
     </main>
+
+    <template id="readerTemplate">
+      <article class="reader-instance">
+        <header class="reader-header">
+          <h2 data-role="reader-title">Reader</h2>
+          <button data-role="remove-reader" class="icon-button" type="button" aria-label="Remove reader">
+            Remove
+          </button>
+        </header>
+
+        <section class="reader-panel" aria-label="Speed reading display">
+          <div data-role="word-display" class="word-display" aria-live="polite">Paste or upload text</div>
+          <div class="progress-section">
+            <button data-role="progress-track" class="progress-track" type="button" aria-label="Seek through text">
+              <span data-role="progress-fill" class="progress-fill"></span>
+            </button>
+            <div class="progress-meta">
+              <span data-role="progress-text">Word 0 of 0</span>
+              <span data-role="percent-text">0%</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="controls-panel" aria-label="Reader controls">
+          <div class="control-row">
+            <button data-role="start-button" class="primary-button" type="button">Start</button>
+            <button data-role="pause-button" type="button">Pause</button>
+            <button data-role="reset-button" type="button">Reset</button>
+          </div>
+
+          <div class="speed-controls" aria-label="Speed controls">
+            <button data-role="decrease-speed" type="button" aria-label="Decrease speed">-</button>
+            <output data-role="wpm-output">400 WPM</output>
+            <button data-role="increase-speed" type="button" aria-label="Increase speed">+</button>
+          </div>
+
+          <label class="input-label">
+            Text
+            <textarea data-role="text-input" rows="8" placeholder="Paste text here, then press Start."></textarea>
+          </label>
+
+          <div class="file-row">
+            <label class="file-picker">
+              Upload file
+              <input
+                data-role="file-input"
+                type="file"
+                accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf"
+              />
+            </label>
+            <span data-role="file-name" class="file-name">No file selected</span>
+          </div>
+
+          <div class="toggle-row">
+            <label class="toggle-control">
+              <input data-role="ai-toggle" type="checkbox" />
+              <span>AI</span>
+            </label>
+            <label class="toggle-control">
+              <input data-role="simplify-toggle" type="checkbox" disabled />
+              <span>AI simplify</span>
+            </label>
+          </div>
+
+          <div data-role="ai-settings" class="ai-settings" hidden>
+            <label>
+              API key
+              <input data-role="api-key" type="password" autocomplete="off" placeholder="sk-..." />
+            </label>
+            <label>
+              Endpoint
+              <input data-role="api-endpoint" type="url" value="https://api.openai.com/v1/responses" />
+            </label>
+            <label>
+              Model
+              <input data-role="api-model" type="text" value="gpt-4.1-mini" />
+            </label>
+          </div>
+
+          <p data-role="status-message" class="status-message" role="status"></p>
+        </section>
+      </article>
+    </template>
   </body>
 </html>

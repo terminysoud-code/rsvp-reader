@@ -3,7 +3,7 @@ import { chromium } from "playwright";
 const APP_URL = process.env.APP_URL || "http://127.0.0.1:8765";
 
 const browser = await chromium.launch({ headless: true });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const page = await browser.newPage({ viewport: { width: 1360, height: 900 } });
 const errors = [];
 
 page.on("pageerror", (error) => errors.push(error.message));
@@ -15,19 +15,26 @@ page.on("console", (message) => {
 
 try {
   await page.goto(APP_URL, { waitUntil: "networkidle" });
-  await page.fill(
-    "#textInput",
-    "One two three four five six seven eight nine ten eleven twelve",
-  );
-  await page.click("#startButton");
-  await page.waitForTimeout(250);
-  const activeButtonText = await page.textContent("#startButton");
-  const activeButtonClass = await page.getAttribute("#startButton", "class");
-  await page.click("#increaseSpeed");
-  await page.click("#pauseButton");
+  await page.click("#addReaderButton");
 
-  const beforeSeek = await page.textContent("#progressText");
-  const progressBox = await page.locator("#progressTrack").boundingBox();
+  const readers = page.locator(".reader-instance");
+  const first = readers.nth(0);
+  const second = readers.nth(1);
+
+  await first.locator('[data-role="text-input"]').fill("One two three four five six seven eight");
+  await second.locator('[data-role="text-input"]').fill("Alpha beta gamma delta epsilon zeta eta theta");
+
+  await first.locator('[data-role="start-button"]').click();
+  await page.waitForTimeout(250);
+
+  const firstButtonText = await first.locator('[data-role="start-button"]').textContent();
+  const firstButtonClass = await first.locator('[data-role="start-button"]').getAttribute("class");
+  const secondProgressBefore = await second.locator('[data-role="progress-text"]').textContent();
+
+  await first.locator('[data-role="increase-speed"]').click();
+  await first.locator('[data-role="pause-button"]').click();
+
+  const progressBox = await first.locator('[data-role="progress-track"]').boundingBox();
 
   if (!progressBox) {
     throw new Error("Progress bar was not visible.");
@@ -38,16 +45,30 @@ try {
     progressBox.y + progressBox.height / 2,
   );
 
-  const afterSeek = await page.textContent("#progressText");
-  const wpm = await page.textContent("#wpmOutput");
-  const displayedWord = await page.textContent("#wordDisplay");
+  await first.locator('[data-role="ai-toggle"]').check();
+  const simplifyEnabled = await first.locator('[data-role="simplify-toggle"]').isEnabled();
+  await first.locator('[data-role="ai-toggle"]').uncheck();
+  const simplifyDisabled = await first.locator('[data-role="simplify-toggle"]').isDisabled();
 
-  if (!beforeSeek || !afterSeek || beforeSeek === afterSeek) {
-    throw new Error("Progress did not change after seeking.");
+  const firstProgressAfter = await first.locator('[data-role="progress-text"]').textContent();
+  const secondProgressAfter = await second.locator('[data-role="progress-text"]').textContent();
+  const wpm = await first.locator('[data-role="wpm-output"]').textContent();
+  const displayedWord = await first.locator('[data-role="word-display"]').textContent();
+
+  if (firstButtonText !== "Stop" || !firstButtonClass?.includes("is-stop")) {
+    throw new Error("Start button did not switch to inverted Stop state.");
   }
 
-  if (activeButtonText !== "Stop" || !activeButtonClass?.includes("is-stop")) {
-    throw new Error("Start button did not switch to inverted Stop state.");
+  if (!firstProgressAfter || firstProgressAfter === "Word 0 of 0") {
+    throw new Error("First reader progress did not update.");
+  }
+
+  if (secondProgressBefore !== secondProgressAfter) {
+    throw new Error("Second reader state changed while first reader played.");
+  }
+
+  if (!simplifyEnabled || !simplifyDisabled) {
+    throw new Error("AI simplify toggle did not follow the AI toggle state.");
   }
 
   if (!wpm?.includes("450")) {
@@ -65,8 +86,8 @@ try {
   console.log(
     JSON.stringify({
       ok: true,
-      beforeSeek,
-      afterSeek,
+      firstProgressAfter,
+      secondProgressAfter,
       wpm,
       displayedWord,
     }),
