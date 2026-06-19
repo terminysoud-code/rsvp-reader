@@ -10,105 +10,32 @@ pdfjs.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 
 class LLMService {
-  static buildPrompt({ simplify }) {
-    const basePrompt = [
-      "Extract, transcribe, and format the uploaded file into clean, meaningful Markdown.",
-      "Return only the Markdown body.",
-      "Preserve factual details, headings, lists, tables, and useful structure wherever possible.",
-    ];
-
-    if (!simplify) {
-      return basePrompt.join("\n");
-    }
-
-    return [
-      ...basePrompt,
-      "Rewrite the content in simpler language for easier reading.",
-      "Retain all important factual details.",
-      "Preserve the document's original utility, such as learning, informing, reference, or decision support.",
-      "Prepend one distinct explanatory paragraph at the very beginning explaining exactly how and why the text was simplified.",
-    ].join("\n");
-  }
-
-  static async processFile({ file, apiKey, endpoint, model, simplify }) {
-    if (!apiKey.trim()) {
-      throw new Error("Add an API key before using AI processing.");
-    }
-
-    if (!endpoint.trim() || !model.trim()) {
-      throw new Error("AI endpoint and model are required.");
-    }
-
-    const fileData = await this.fileToDataUrl(file);
-    const response = await fetch(endpoint.trim(), {
+  static async processText({ text, simplify }) {
+    const response = await fetch("./api/process-text", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey.trim()}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: model.trim(),
-        input: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "input_text",
-                text: this.buildPrompt({ simplify }),
-              },
-              {
-                type: "input_file",
-                filename: file.name || "upload",
-                file_data: fileData,
-              },
-            ],
-          },
-        ],
+        text,
+        simplify,
       }),
     });
 
     const payload = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = payload?.error?.message || `AI request failed with status ${response.status}.`;
+      const message = payload?.error || `AI request failed with status ${response.status}.`;
       throw new Error(message);
     }
 
-    const output = this.extractOutputText(payload);
+    const output = payload?.text || "";
 
     if (!output.trim()) {
       throw new Error("AI response did not contain readable text.");
     }
 
     return output;
-  }
-
-  static fileToDataUrl(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.addEventListener("load", () => resolve(reader.result));
-      reader.addEventListener("error", () => reject(new Error("Could not read the uploaded file.")));
-      reader.readAsDataURL(file);
-    });
-  }
-
-  static extractOutputText(payload) {
-    if (typeof payload?.output_text === "string") {
-      return payload.output_text;
-    }
-
-    const parts = [];
-
-    for (const item of payload?.output || []) {
-      for (const content of item?.content || []) {
-        if (typeof content?.text === "string") {
-          parts.push(content.text);
-        }
-      }
-    }
-
-    return parts.join("\n\n");
   }
 }
 
@@ -153,10 +80,6 @@ class RSVPReader {
       fileName: byRole("file-name"),
       aiToggle: byRole("ai-toggle"),
       simplifyToggle: byRole("simplify-toggle"),
-      aiSettings: byRole("ai-settings"),
-      apiKey: byRole("api-key"),
-      apiEndpoint: byRole("api-endpoint"),
-      apiModel: byRole("api-model"),
       statusMessage: byRole("status-message"),
     };
   }
@@ -219,18 +142,16 @@ class RSVPReader {
     }
 
     this.elements.fileName.textContent = file.name;
-    this.setStatus(this.elements.aiToggle.checked ? "Processing with AI..." : "Parsing file...");
+    this.setStatus(this.elements.aiToggle.checked ? "Extracting text..." : "Parsing file...");
 
     try {
+      const extractedText = await this.parseStandardFile(file);
       const text = this.elements.aiToggle.checked
-        ? await LLMService.processFile({
-            file,
-            apiKey: this.elements.apiKey.value,
-            endpoint: this.elements.apiEndpoint.value,
-            model: this.elements.apiModel.value,
+        ? await LLMService.processText({
+            text: extractedText,
             simplify: this.elements.simplifyToggle.checked,
           })
-        : await this.parseStandardFile(file);
+        : extractedText;
 
       this.elements.textInput.value = text;
       this.loadText(text, file.name);
@@ -253,7 +174,7 @@ class RSVPReader {
       return this.parsePdf(file);
     }
 
-    throw new Error("Unsupported file type. Upload a .txt, .md, or .pdf file, or turn AI on.");
+    throw new Error("Unsupported file type. Upload a .txt, .md, or .pdf file.");
   }
 
   async parsePdf(file) {
@@ -417,8 +338,7 @@ class RSVPReader {
     const aiEnabled = this.elements.aiToggle.checked;
 
     this.elements.simplifyToggle.disabled = !aiEnabled;
-    this.elements.aiSettings.hidden = !aiEnabled;
-    this.elements.fileInput.accept = aiEnabled ? "" : STANDARD_ACCEPT;
+    this.elements.fileInput.accept = STANDARD_ACCEPT;
 
     if (!aiEnabled) {
       this.elements.simplifyToggle.checked = false;

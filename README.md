@@ -12,15 +12,32 @@ A lightweight Rapid Serial Visual Presentation speed-reading app built with vani
 - Pause, resume, reset, and keep your current position.
 - Track progress as both a visual bar and word count.
 - Click the progress bar to jump to any point in the text.
-- Turn on AI file processing to send broader uploads to an OpenAI Responses-compatible endpoint.
+- Turn on AI cleanup to process extracted text through a Vercel API route.
 - Turn on AI simplify to request simplified Markdown with an explanatory paragraph prepended.
 - Responsive layout for desktop and mobile.
 
 ## AI Processing
 
-AI processing runs from the browser with values entered by the user. No API key is committed to this repo.
+AI processing runs through a server-side Vercel function at `/api/process-text`.
+The browser never receives the OpenAI API key.
 
-Each reader has its own AI toggle, simplify toggle, endpoint, model, and API key field. When AI is off, the app keeps the original local `.txt`, `.md`, and `.pdf` parsing path. When AI is on, the selected file is sent as a base64 file input to the configured `/v1/responses` endpoint, then the returned Markdown is fed into the same RSVP word parser.
+Each reader has its own AI cleanup and simplify toggles. The frontend extracts
+plain text from `.txt`, `.md`, and `.pdf` files, posts that text to the backend,
+then feeds the returned Markdown into the same RSVP word parser.
+
+Configure these environment variables in Vercel:
+
+```text
+OPENAI_API_KEY=your_server_side_key
+OPENAI_MODEL=gpt-4.1-mini
+MAX_TEXT_CHARS=120000
+RATE_LIMIT_REQUESTS=20
+RATE_LIMIT_WINDOW_MS=60000
+```
+
+The backend treats uploaded content as untrusted text, separates instructions
+from document data, applies size limits, returns `Cache-Control: no-store`, and
+uses a lightweight per-instance rate limit.
 
 ## Run Locally
 
@@ -35,6 +52,21 @@ Then open:
 ```text
 http://127.0.0.1:8765
 ```
+
+Local AI processing requires a server that can run `api/process-text.js` with
+`OPENAI_API_KEY` set. Static `python3 -m http.server` mode only covers the
+non-AI reader UI.
+
+## Deploy On Vercel
+
+1. Import this GitHub repo into Vercel.
+2. Add `OPENAI_API_KEY` in Project Settings -> Environment Variables.
+3. Optionally set `OPENAI_MODEL`, `MAX_TEXT_CHARS`, `RATE_LIMIT_REQUESTS`, and
+   `RATE_LIMIT_WINDOW_MS`.
+4. Deploy.
+
+Vercel serves `index.html`, `app.js`, and `styles.css` as static assets, and
+deploys `api/process-text.js` as the server-side function.
 
 ## Verify
 
