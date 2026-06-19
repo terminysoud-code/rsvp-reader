@@ -55,10 +55,13 @@
             <button data-role="increase-speed" type="button" aria-label="Increase speed">+</button>
           </div>
 
-          <label class="input-label">
-            Text
+          <div class="text-field">
+            <div class="text-field-header">
+              <span>Text</span>
+              <button data-role="simplify-text" class="secondary-action" type="button">AI simplify</button>
+            </div>
             <textarea data-role="text-input" rows="8" placeholder="Paste text here, upload a file, then press Start."></textarea>
-          </label>
+          </div>
 
           <div class="file-row">
             <label class="file-picker">
@@ -75,11 +78,7 @@
           <div class="toggle-row">
             <label class="toggle-control">
               <input data-role="ai-toggle" type="checkbox" />
-              <span>AI cleanup</span>
-            </label>
-            <label class="toggle-control">
-              <input data-role="simplify-toggle" type="checkbox" disabled />
-              <span>AI simplify</span>
+              <span>AI extraction</span>
             </label>
           </div>
 

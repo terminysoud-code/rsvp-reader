@@ -5,15 +5,15 @@ A lightweight Rapid Serial Visual Presentation speed-reading app built with vani
 ## Features
 
 - Paste text directly into the reader.
-- Upload `.txt`, `.md`, and `.pdf` files.
+- Upload `.txt`, `.md`, and `.pdf` files locally.
+- Turn on AI extraction to process broader text-bearing file types, including Office documents.
 - Spawn multiple independent readers on one dashboard.
 - Parse text into a sequential word list while preserving punctuation attached to words.
 - Read at 400 WPM by default, with speed controls from 100 to 1200 WPM.
 - Pause, resume, reset, and keep your current position.
 - Track progress as both a visual bar and word count.
 - Click the progress bar to jump to any point in the text.
-- Turn on AI cleanup to process extracted text through a Vercel API route.
-- Turn on AI simplify to request simplified Markdown with an explanatory paragraph prepended.
+- Use AI simplify on text already in the editor.
 - Responsive layout for desktop and mobile.
 
 ## AI Processing
@@ -21,9 +21,11 @@ A lightweight Rapid Serial Visual Presentation speed-reading app built with vani
 AI processing runs through a server-side Vercel function at `/api/process-text`.
 The browser never receives the OpenAI API key.
 
-Each reader has its own AI cleanup and simplify toggles. The frontend extracts
-plain text from `.txt`, `.md`, and `.pdf` files, posts that text to the backend,
-then feeds the returned Markdown into the same RSVP word parser.
+Each reader has an AI extraction toggle for uploads and an AI simplify button
+for text already in the editor. When AI extraction is off, the browser handles
+local `.txt`, `.md`, and `.pdf` parsing. When AI extraction is on, supported
+text-bearing files are sent to the backend as data URLs, then the backend calls
+OpenAI with the server-side key.
 
 Configure these environment variables in Vercel:
 
@@ -31,6 +33,7 @@ Configure these environment variables in Vercel:
 OPENAI_API_KEY=your_server_side_key
 OPENAI_MODEL=gpt-4.1-mini
 MAX_TEXT_CHARS=120000
+MAX_FILE_BYTES=3500000
 RATE_LIMIT_REQUESTS=20
 RATE_LIMIT_WINDOW_MS=60000
 ```

@@ -323,11 +323,26 @@ input:disabled {
 }
 
 .input-label,
+.text-field,
 .ai-settings label {
   display: grid;
   gap: 8px;
   color: var(--muted-strong);
   font-weight: 700;
+}
+
+.text-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.secondary-action {
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--blue);
+  background: #f8fbff;
 }
 
 textarea,

@@ -5,21 +5,69 @@ const WPM_STEP = 50;
 const MIN_WPM = 100;
 const MAX_WPM = 1200;
 const STANDARD_ACCEPT = ".txt,.md,.pdf,text/plain,text/markdown,application/pdf";
+const AI_ACCEPT = [
+  ".txt",
+  ".md",
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".ppt",
+  ".pptx",
+  ".xls",
+  ".xlsx",
+  ".csv",
+  ".tsv",
+  ".rtf",
+  ".html",
+  ".htm",
+  ".json",
+  ".xml",
+  ".yaml",
+  ".yml",
+  "text/*",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+].join(",");
+const MAX_AI_FILE_BYTES = 3_500_000;
 
 pdfjs.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 
 class LLMService {
   static async processText({ text, simplify }) {
+    return this.request({
+      text,
+      simplify,
+    });
+  }
+
+  static async processFile({ file }) {
+    if (file.size > MAX_AI_FILE_BYTES) {
+      throw new Error(
+        `File is too large for AI extraction. Limit is ${MAX_AI_FILE_BYTES.toLocaleString()} bytes.`,
+      );
+    }
+
+    const fileData = await this.fileToDataUrl(file);
+    return this.request({
+      fileData,
+      filename: file.name || "upload",
+      simplify: false,
+    });
+  }
+
+  static async request(body) {
     const response = await fetch("./api/process-text", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        text,
-        simplify,
-      }),
+      body: JSON.stringify(body),
     });
 
     const payload = await response.json().catch(() => null);
@@ -36,6 +84,16 @@ class LLMService {
     }
 
     return output;
+  }
+
+  static fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.addEventListener("load", () => resolve(reader.result));
+      reader.addEventListener("error", () => reject(new Error("Could not read the uploaded file.")));
+      reader.readAsDataURL(file);
+    });
   }
 }
 
@@ -79,7 +137,7 @@ class RSVPReader {
       fileInput: byRole("file-input"),
       fileName: byRole("file-name"),
       aiToggle: byRole("ai-toggle"),
-      simplifyToggle: byRole("simplify-toggle"),
+      simplifyText: byRole("simplify-text"),
       statusMessage: byRole("status-message"),
     };
   }
@@ -106,7 +164,7 @@ class RSVPReader {
     });
     this.elements.fileInput.addEventListener("change", () => this.handleFileUpload());
     this.elements.aiToggle.addEventListener("change", () => this.updateAiControls());
-    this.elements.simplifyToggle.addEventListener("change", () => this.updateAiControls());
+    this.elements.simplifyText.addEventListener("click", () => this.handleSimplifyText());
   }
 
   parseWords(text) {
@@ -142,16 +200,12 @@ class RSVPReader {
     }
 
     this.elements.fileName.textContent = file.name;
-    this.setStatus(this.elements.aiToggle.checked ? "Extracting text..." : "Parsing file...");
+    this.setStatus(this.elements.aiToggle.checked ? "Extracting with AI..." : "Parsing file...");
 
     try {
-      const extractedText = await this.parseStandardFile(file);
       const text = this.elements.aiToggle.checked
-        ? await LLMService.processText({
-            text: extractedText,
-            simplify: this.elements.simplifyToggle.checked,
-          })
-        : extractedText;
+        ? await LLMService.processFile({ file })
+        : await this.parseStandardFile(file);
 
       this.elements.textInput.value = text;
       this.loadText(text, file.name);
@@ -175,6 +229,30 @@ class RSVPReader {
     }
 
     throw new Error("Unsupported file type. Upload a .txt, .md, or .pdf file.");
+  }
+
+  async handleSimplifyText() {
+    const text = this.elements.textInput.value.trim();
+
+    if (!text) {
+      this.setStatus("Add text before using AI simplify.", true);
+      return;
+    }
+
+    this.pause();
+    this.setStatus("Simplifying with AI...");
+
+    try {
+      const simplifiedText = await LLMService.processText({
+        text,
+        simplify: true,
+      });
+
+      this.elements.textInput.value = simplifiedText;
+      this.loadText(simplifiedText, "AI simplified text");
+    } catch (error) {
+      this.setStatus(error.message, true);
+    }
   }
 
   async parsePdf(file) {
@@ -337,12 +415,7 @@ class RSVPReader {
   updateAiControls() {
     const aiEnabled = this.elements.aiToggle.checked;
 
-    this.elements.simplifyToggle.disabled = !aiEnabled;
-    this.elements.fileInput.accept = STANDARD_ACCEPT;
-
-    if (!aiEnabled) {
-      this.elements.simplifyToggle.checked = false;
-    }
+    this.elements.fileInput.accept = aiEnabled ? AI_ACCEPT : STANDARD_ACCEPT;
   }
 
   setStatus(message, isError = false) {

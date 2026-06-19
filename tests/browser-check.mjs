@@ -46,9 +46,10 @@ try {
   );
 
   await first.locator('[data-role="ai-toggle"]').check();
-  const simplifyEnabled = await first.locator('[data-role="simplify-toggle"]').isEnabled();
+  const acceptWithAi = await first.locator('[data-role="file-input"]').getAttribute("accept");
+  const simplifyEnabled = await first.locator('[data-role="simplify-text"]').isEnabled();
   await first.locator('[data-role="ai-toggle"]').uncheck();
-  const simplifyDisabled = await first.locator('[data-role="simplify-toggle"]').isDisabled();
+  const acceptWithoutAi = await first.locator('[data-role="file-input"]').getAttribute("accept");
 
   const firstProgressAfter = await first.locator('[data-role="progress-text"]').textContent();
   const secondProgressAfter = await second.locator('[data-role="progress-text"]').textContent();
@@ -67,8 +68,12 @@ try {
     throw new Error("Second reader state changed while first reader played.");
   }
 
-  if (!simplifyEnabled || !simplifyDisabled) {
-    throw new Error("AI simplify toggle did not follow the AI toggle state.");
+  if (!simplifyEnabled) {
+    throw new Error("AI simplify button was not available for existing text.");
+  }
+
+  if (!acceptWithAi?.includes(".pptx") || acceptWithoutAi?.includes(".pptx")) {
+    throw new Error("AI extraction did not broaden and restore accepted upload types.");
   }
 
   if (!wpm?.includes("450")) {
