@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "serve": "python3 -m http.server 8765",
+    "fixtures:clean": "node tests/manage-samples.mjs clean",
+    "fixtures:download": "node tests/manage-samples.mjs download",
+    "fixtures:list": "node tests/manage-samples.mjs list",
+    "test:ai-live": "playwright install chromium && node tests/live-ai-check.mjs",
     "test:browser": "playwright install chromium && node tests/browser-check.mjs"
   },
   "devDependencies": {

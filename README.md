@@ -87,3 +87,22 @@ If Chromium system dependencies are missing on Linux, run:
 ```bash
 npx playwright install-deps chromium
 ```
+
+## Live AI Test Fixtures
+
+Download and manage sample text fixtures:
+
+```bash
+npm run fixtures:download
+npm run fixtures:list
+npm run fixtures:clean
+```
+
+Run the live AI integration check against a deployed app:
+
+```bash
+APP_URL=https://your-vercel-app.example npm run test:ai-live
+```
+
+The live check fills the editor with sample text, runs AI simplify, enables AI
+extraction, uploads the same fixture file, and verifies the text window updates.
