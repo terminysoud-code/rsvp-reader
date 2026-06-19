@@ -13,7 +13,8 @@ A lightweight Rapid Serial Visual Presentation speed-reading app built with vani
 - Pause, resume, reset, and keep your current position.
 - Track progress as both a visual bar and word count.
 - Click the progress bar to jump to any point in the text.
-- Use AI simplify on text already in the editor.
+- Use AI simplify on text already in the editor, with length presets of 10%,
+  20%, 30%, 50%, or a custom rounded word target.
 - Responsive layout for desktop and mobile.
 
 ## AI Processing
@@ -22,7 +23,8 @@ AI processing runs through a server-side Vercel function at `/api/process-text`.
 The browser never receives the OpenAI API key.
 
 Each reader has an AI extraction toggle for uploads and an AI simplify button
-for text already in the editor. When AI extraction is off, the browser handles
+for text already in the editor. Simplification requests include a target length
+rounded to the nearest 100 words. When AI extraction is off, the browser handles
 local `.txt`, `.md`, and `.pdf` parsing. When AI extraction is on, supported
 text-bearing files are sent to the backend as data URLs, then the backend calls
 OpenAI with the server-side key.

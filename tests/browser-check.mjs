@@ -14,7 +14,8 @@ page.on("console", (message) => {
 });
 
 try {
-  await page.goto(APP_URL, { waitUntil: "networkidle" });
+  await page.goto(APP_URL, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("#addReaderButton");
   await page.click("#addReaderButton");
 
   const readers = page.locator(".reader-instance");
@@ -48,6 +49,8 @@ try {
   await first.locator('[data-role="ai-toggle"]').check();
   const acceptWithAi = await first.locator('[data-role="file-input"]').getAttribute("accept");
   const simplifyEnabled = await first.locator('[data-role="simplify-text"]').isEnabled();
+  await first.locator('[data-role="simplify-length"]').selectOption("custom");
+  const customLengthVisible = await first.locator('[data-role="custom-length"]').isVisible();
   await first.locator('[data-role="ai-toggle"]').uncheck();
   const acceptWithoutAi = await first.locator('[data-role="file-input"]').getAttribute("accept");
 
@@ -70,6 +73,10 @@ try {
 
   if (!simplifyEnabled) {
     throw new Error("AI simplify button was not available for existing text.");
+  }
+
+  if (!customLengthVisible) {
+    throw new Error("Custom simplification length input was not shown.");
   }
 
   if (!acceptWithAi?.includes(".pptx") || acceptWithoutAi?.includes(".pptx")) {

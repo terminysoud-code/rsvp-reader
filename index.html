@@ -58,7 +58,29 @@
           <div class="text-field">
             <div class="text-field-header">
               <span>Text</span>
-              <button data-role="simplify-text" class="secondary-action" type="button">AI simplify</button>
+              <div class="simplify-tools">
+                <label>
+                  <span>Length</span>
+                  <select data-role="simplify-length" aria-label="Simplification length">
+                    <option value="10">10%</option>
+                    <option value="20">20%</option>
+                    <option value="30" selected>30%</option>
+                    <option value="50">50%</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </label>
+                <input
+                  data-role="custom-length"
+                  type="number"
+                  min="100"
+                  step="100"
+                  value="500"
+                  aria-label="Custom simplification word count"
+                  hidden
+                  disabled
+                />
+                <button data-role="simplify-text" class="secondary-action" type="button">AI simplify</button>
+              </div>
             </div>
             <textarea data-role="text-input" rows="8" placeholder="Paste text here, upload a file, then press Start."></textarea>
           </div>

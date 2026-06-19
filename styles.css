@@ -338,6 +338,42 @@ input:disabled {
   gap: 12px;
 }
 
+.simplify-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.simplify-tools label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.simplify-tools select,
+.simplify-tools input {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbff;
+  color: var(--ink);
+  font-weight: 750;
+}
+
+.simplify-tools select {
+  padding: 0 30px 0 10px;
+}
+
+.simplify-tools input {
+  width: 104px;
+  padding: 0 10px;
+}
+
 .secondary-action {
   min-height: 36px;
   padding: 0 12px;
@@ -510,6 +546,20 @@ textarea::placeholder {
   .file-picker,
   .file-name,
   .toggle-control {
+    width: 100%;
+  }
+
+  .text-field-header,
+  .simplify-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .simplify-tools,
+  .simplify-tools label,
+  .simplify-tools select,
+  .simplify-tools input,
+  .secondary-action {
     width: 100%;
   }
 

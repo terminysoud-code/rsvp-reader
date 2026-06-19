@@ -34,15 +34,17 @@ const AI_ACCEPT = [
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ].join(",");
 const MAX_AI_FILE_BYTES = 3_500_000;
+const LENGTH_PRESETS = new Set(["10", "20", "30", "50"]);
 
 pdfjs.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 
 class LLMService {
-  static async processText({ text, simplify }) {
+  static async processText({ text, simplify, targetWords }) {
     return this.request({
       text,
       simplify,
+      targetWords,
     });
   }
 
@@ -137,6 +139,8 @@ class RSVPReader {
       fileInput: byRole("file-input"),
       fileName: byRole("file-name"),
       aiToggle: byRole("ai-toggle"),
+      simplifyLength: byRole("simplify-length"),
+      customLength: byRole("custom-length"),
       simplifyText: byRole("simplify-text"),
       statusMessage: byRole("status-message"),
     };
@@ -164,6 +168,7 @@ class RSVPReader {
     });
     this.elements.fileInput.addEventListener("change", () => this.handleFileUpload());
     this.elements.aiToggle.addEventListener("change", () => this.updateAiControls());
+    this.elements.simplifyLength.addEventListener("change", () => this.updateSimplifyControls());
     this.elements.simplifyText.addEventListener("click", () => this.handleSimplifyText());
   }
 
@@ -243,9 +248,11 @@ class RSVPReader {
     this.setStatus("Simplifying with AI...");
 
     try {
+      const targetWords = this.getSimplifyTargetWords(text);
       const simplifiedText = await LLMService.processText({
         text,
         simplify: true,
+        targetWords,
       });
 
       this.elements.textInput.value = simplifiedText;
@@ -253,6 +260,33 @@ class RSVPReader {
     } catch (error) {
       this.setStatus(error.message, true);
     }
+  }
+
+  countWords(text) {
+    return this.parseWords(text).length;
+  }
+
+  roundToHundred(words) {
+    if (words <= 0) {
+      return 100;
+    }
+
+    return Math.max(100, Math.round(words / 100) * 100);
+  }
+
+  getSimplifyTargetWords(text) {
+    const selection = this.elements.simplifyLength.value;
+
+    if (selection === "custom") {
+      return this.roundToHundred(Number(this.elements.customLength.value) || 100);
+    }
+
+    if (!LENGTH_PRESETS.has(selection)) {
+      return null;
+    }
+
+    const sourceWords = this.countWords(text);
+    return this.roundToHundred(sourceWords * (Number(selection) / 100));
   }
 
   async parsePdf(file) {
@@ -416,6 +450,12 @@ class RSVPReader {
     const aiEnabled = this.elements.aiToggle.checked;
 
     this.elements.fileInput.accept = aiEnabled ? AI_ACCEPT : STANDARD_ACCEPT;
+  }
+
+  updateSimplifyControls() {
+    const isCustom = this.elements.simplifyLength.value === "custom";
+    this.elements.customLength.hidden = !isCustom;
+    this.elements.customLength.disabled = !isCustom;
   }
 
   setStatus(message, isError = false) {
