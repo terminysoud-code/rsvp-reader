@@ -27,8 +27,8 @@ async function exists(filePath) {
 }
 
 function extractSlice(text, sample) {
-  const start = text.indexOf(sample.sliceStart);
-  const end = text.indexOf(sample.sliceEnd);
+  const start = text.lastIndexOf(sample.sliceStart);
+  const end = text.indexOf(sample.sliceEnd, start + sample.sliceStart.length);
 
   if (start === -1 || end === -1 || end <= start) {
     return text.trim();

@@ -1,6 +1,6 @@
 # RSVP Reader Project Status
 
-Last updated: 2026-06-19 17:10 UTC
+Last updated: 2026-06-20 13:08 UTC
 
 ## Project Location
 
@@ -35,12 +35,12 @@ Main files:
 - `index.html` - app shell and reader template
 - `styles.css` - polished one-screen split workspace layout
 - `app.js` - frontend reader logic, multi-reader state, file parsing, AI controls
-- `api/process-text.js` - Vercel serverless API route for OpenAI-backed processing
+- `api/process-text.js` - Vercel serverless API route for OpenAI or Gemini-backed processing
 - `tests/browser-check.mjs` - local browser smoke test
 - `tests/manage-samples.mjs` - sample text fixture downloader/manager
 - `tests/live-ai-check.mjs` - live deployed AI integration checker
 
-The frontend no longer contains or requests an OpenAI API key. The browser calls same-origin backend route `./api/process-text`, and the backend reads `OPENAI_API_KEY` from Vercel environment variables.
+The frontend no longer contains or requests AI provider keys. The browser calls same-origin backend route `./api/process-text`, and the backend reads provider keys from Vercel environment variables.
 
 ## Current Features
 
@@ -80,35 +80,44 @@ The frontend no longer contains or requests an OpenAI API key. The browser calls
 
 ## Vercel Environment Variables
 
-Required:
+Required for OpenAI:
 
 ```text
+AI_PROVIDER=openai
 OPENAI_API_KEY
+```
+
+Required for Gemini:
+
+```text
+AI_PROVIDER=gemini
+GEMINI_API_KEY
 ```
 
 Optional:
 
 ```text
 OPENAI_MODEL=gpt-4.1-mini
+GEMINI_MODEL=gemini-2.5-flash
 MAX_TEXT_CHARS=120000
 MAX_FILE_BYTES=3500000
 RATE_LIMIT_REQUESTS=20
 RATE_LIMIT_WINDOW_MS=60000
 ```
 
-Important: do not commit `OPENAI_API_KEY` to GitHub, `.env.example`, frontend code, docs, or chat.
+Important: do not commit provider keys such as `OPENAI_API_KEY` or `GEMINI_API_KEY` to GitHub, `.env.example`, frontend code, docs, or chat.
 
 ## Deployment State
 
 Latest GitHub/Vercel production deployment record observed:
 
 ```text
-Deployment id: 5125690071
-Commit: 61b9e935be596fcd754b4d30180021b7deae4510
+Deployment id: dpl_HVT2UnmjMK5sA5hovU2c28u7TZW3
 Environment: Production
-State: success
-Created: 2026-06-19T16:22:54Z
-URL: https://fastreader-fov7wio1e-jaroska-developers.vercel.app
+State: READY
+Created: 2026-06-20
+URL: https://fastreader-2y6j2huyn-jaroska-developers.vercel.app
+Alias: https://fastreader-omega.vercel.app
 ```
 
 Known deployment/access issue:
@@ -117,11 +126,33 @@ Known deployment/access issue:
 - Public aliases checked earlier, including `https://fastreader.vercel.app`, were reachable but did not appear to serve the current RSVP app/API.
 - Because of that, the live OpenAI-backed integration has not been fully verified end-to-end from this environment.
 
-Needed to complete live verification:
+Current public test URL from Boss:
 
-- A public URL that serves the current `main` deployment and exposes `/api/process-text`, or
-- a Vercel protection bypass token, or
-- authenticated Vercel CLI/browser access on this machine.
+```text
+https://fastreader-omega.vercel.app/
+```
+
+This URL serves the RSVP app and reaches `/api/process-text`. Production is currently configured for Gemini with:
+
+```text
+AI_PROVIDER=gemini
+GEMINI_API_KEY=<sensitive Vercel secret>
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+The older Vercel `OPENAI_API_KEY` remains present but is no longer the active provider while `AI_PROVIDER=gemini`.
+
+Google access check on 2026-06-20:
+
+- `gcloud` is not installed.
+- No Google Cloud environment credential is configured locally.
+- `gog` has Google Workspace OAuth for `terminysoud@gmail.com`, but that is not enough to create an AI Studio/Gemini API key non-interactively.
+- Boss provided a Gemini key and it was stored as a sensitive Vercel Production env var.
+
+Next steps:
+
+- Commit/push the Gemini provider code if Boss wants the GitHub repo to match the deployed production state.
+- Optionally rotate the Gemini key later because it was shared through chat; do not record the key value in files.
 
 ## Verification Completed
 
@@ -152,6 +183,43 @@ Observed passing output:
 
 ```json
 {"ok":true,"firstProgressAfter":"Word 6 of 8","secondProgressAfter":"Word 1 of 8","wpm":"450 WPM","displayedWord":"six"}
+```
+
+Earlier OpenAI live AI check against `https://fastreader-omega.vercel.app/` failed before any successful AI output:
+
+```text
+AI simplify failed: You exceeded your current quota, please check your plan and billing details.
+```
+
+Gemini switch completed:
+
+- `api/process-text.js` maps OpenAI 401 and insufficient-quota 429 errors to clearer Vercel setup messages.
+- `api/process-text.js` now supports Gemini via `AI_PROVIDER=gemini`, `GEMINI_API_KEY`, and optional `GEMINI_MODEL`.
+- text-like file extraction now decodes and returns uploaded text directly when not simplifying, avoiding unnecessary model calls and preserving full text.
+- `tests/live-ai-check.mjs` waits for exact AI success status messages and fails immediately on UI/API errors instead of timing out.
+- `tests/manage-samples.mjs` now uses the final Gutenberg chapter heading occurrence so the Alice fixture downloads the real chapter body instead of the table-of-contents line.
+
+Latest local checks on 2026-06-20:
+
+```bash
+node --check app.js
+node --check api/process-text.js
+node --check tests/manage-samples.mjs
+node --check tests/live-ai-check.mjs
+```
+
+Additional mocked Gemini backend invocation passed with `AI_PROVIDER=gemini` and a fake `GEMINI_API_KEY`; it verified the route calls Gemini `generateContent` and returns response text.
+
+Latest live Gemini AI check passed:
+
+```bash
+APP_URL=https://fastreader-omega.vercel.app npm run test:ai-live
+```
+
+Observed passing output:
+
+```json
+{"ok":true,"appUrl":"https://fastreader-omega.vercel.app","simplifiedChars":1317,"extractedWords":2186,"status":"alice-chapter-1.txt: 2,186 words."}
 ```
 
 ## Fixture And Live AI Test Tools

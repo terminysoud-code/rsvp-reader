@@ -17,6 +17,7 @@ const excerpt = sampleText.split(/\s+/).slice(0, 420).join(" ");
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1360, height: 900 } });
 const errors = [];
+const apiErrors = [];
 
 page.on("pageerror", (error) => errors.push(error.message));
 page.on("console", (message) => {
@@ -24,6 +25,31 @@ page.on("console", (message) => {
     errors.push(message.text());
   }
 });
+page.on("response", async (response) => {
+  if (!response.url().includes("/api/process-text") || response.ok()) {
+    return;
+  }
+
+  const payload = await response.json().catch(() => null);
+  apiErrors.push(payload?.error || `AI API returned HTTP ${response.status()}`);
+});
+
+async function waitForAiStep(page, predicate, label) {
+  await page.waitForFunction(
+    ({ predicateSource, label }) => {
+      const status = document.querySelector('[data-role="status-message"]')?.textContent || "";
+      const hasError = document.querySelector('[data-role="status-message"]')?.classList.contains("error");
+
+      if (hasError) {
+        throw new Error(`${label} failed: ${status}`);
+      }
+
+      return Function(`return (${predicateSource})`)()(status);
+    },
+    { predicateSource: predicate.toString(), label },
+    { timeout: TIMEOUT_MS },
+  );
+}
 
 try {
   await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: TIMEOUT_MS });
@@ -45,26 +71,27 @@ try {
   await textInput.fill(excerpt);
   await reader.locator('[data-role="simplify-length"]').selectOption("10");
   await reader.locator('[data-role="simplify-text"]').click();
-  await page.waitForFunction(
+  await waitForAiStep(
+    page,
     () => {
       const textarea = document.querySelector('[data-role="text-input"]');
-      return textarea && textarea.value.length > 0 && !textarea.value.includes("Alice was beginning");
+      const status = document.querySelector('[data-role="status-message"]')?.textContent || "";
+      return textarea && /AI simplified text: .* words\./.test(status);
     },
-    null,
-    { timeout: TIMEOUT_MS },
+    "AI simplify",
   );
 
   const simplifiedText = await textInput.inputValue();
 
   await reader.locator('[data-role="ai-toggle"]').check();
   await reader.locator('[data-role="file-input"]').setInputFiles(samplePath);
-  await page.waitForFunction(
+  await waitForAiStep(
+    page,
     () => {
       const status = document.querySelector('[data-role="status-message"]')?.textContent || "";
-      return /words\./.test(status);
+      return /alice-chapter-1\.txt: .* words\./.test(status);
     },
-    null,
-    { timeout: TIMEOUT_MS },
+    "AI extraction",
   );
 
   const extractedText = await textInput.inputValue();
@@ -72,6 +99,10 @@ try {
 
   if (errors.length) {
     throw new Error(`Browser errors: ${errors.join(" | ")}`);
+  }
+
+  if (apiErrors.length) {
+    throw new Error(`AI API errors: ${apiErrors.join(" | ")}`);
   }
 
   if (simplifiedText.length < 20) {
