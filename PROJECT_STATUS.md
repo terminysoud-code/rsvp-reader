@@ -1,6 +1,6 @@
 # RSVP Reader Project Status
 
-Last updated: 2026-06-20 16:00 UTC
+Last updated: 2026-06-20 16:13 UTC
 
 ## Project Location
 
@@ -56,6 +56,7 @@ The frontend no longer contains or requests AI provider keys. The browser calls 
 - Add/remove readers through a top tab bar with a plus button and per-tab close x.
 - One active reader is visible at a time.
 - Independent text, file, WPM, progress, seek, and playback state per reader.
+- Word-number seek input lets the user jump directly to a specific word position.
 - Markdown-aware flashing word display:
   - strips common Markdown markers from displayed words
   - styles headings, bold, italic, inline code, blockquotes, lists, and strikethrough
@@ -327,6 +328,18 @@ AI controls flow patch on 2026-06-20:
 
 - Caveman mode changed from a checkbox/toggle to its own clickable button beside `AI simplify`.
 - Upload toggle label changed to `AI text extraction from document`.
+- Local checks passed:
+  - `node --check app.js`
+  - `node --check tests/browser-check.mjs`
+  - `npm run test:api`
+  - `npm run test:browser`
+  - `npm audit --audit-level=moderate`
+
+Word-number seek patch on 2026-06-20:
+
+- Added a compact `Go to word` numeric input beside the progress metadata.
+- Enter/change jumps directly to the requested word and clamps the value to the loaded text length.
+- The input stays synced with progress while reading, clicking the progress bar, resetting, and loading new text.
 - Local checks passed:
   - `node --check app.js`
   - `node --check tests/browser-check.mjs`

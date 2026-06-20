@@ -134,6 +134,7 @@ class RSVPReader {
       progressTrack: byRole("progress-track"),
       progressFill: byRole("progress-fill"),
       progressText: byRole("progress-text"),
+      wordSeek: byRole("word-seek"),
       percentText: byRole("percent-text"),
       startButton: byRole("start-button"),
       pauseButton: byRole("pause-button"),
@@ -164,6 +165,14 @@ class RSVPReader {
     this.elements.increaseSpeed.addEventListener("click", () => this.setWpm(this.wpm + WPM_STEP));
     this.elements.progressTrack.addEventListener("click", (event) => this.seekToClientX(event.clientX));
     this.elements.progressTrack.addEventListener("keydown", (event) => this.seekWithKeyboard(event));
+    this.elements.wordSeek.addEventListener("change", () => this.seekToWordInput());
+    this.elements.wordSeek.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        this.seekToWordInput();
+        this.elements.wordSeek.blur();
+      }
+    });
     this.elements.textInput.addEventListener("input", () => {
       if (!this.isPlaying) {
         this.updateControls();
@@ -492,6 +501,30 @@ class RSVPReader {
     }
   }
 
+  seekToWordInput() {
+    if (!this.words.length) {
+      this.setStatus("Load text before seeking.", true);
+      return;
+    }
+
+    const wordNumber = Math.round(Number(this.elements.wordSeek.value));
+
+    if (!Number.isFinite(wordNumber)) {
+      this.updateProgress();
+      return;
+    }
+
+    const clampedWordNumber = Math.min(this.words.length, Math.max(1, wordNumber));
+    this.currentIndex = clampedWordNumber - 1;
+    this.renderWordDisplay(this.words[this.currentIndex]);
+    this.updateProgress();
+    this.setStatus(`Jumped to word ${clampedWordNumber.toLocaleString()}.`);
+
+    if (this.isPlaying) {
+      this.tick();
+    }
+  }
+
   seekWithKeyboard(event) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
       return;
@@ -542,6 +575,12 @@ class RSVPReader {
     this.elements.progressFill.style.width = `${percent}%`;
     this.elements.progressText.textContent = `Word ${displayedIndex.toLocaleString()} of ${total.toLocaleString()}`;
     this.elements.percentText.textContent = `${Math.round(percent)}%`;
+    this.elements.wordSeek.max = String(Math.max(1, total));
+    this.elements.wordSeek.disabled = !total;
+
+    if (document.activeElement !== this.elements.wordSeek) {
+      this.elements.wordSeek.value = total ? String(displayedIndex) : "";
+    }
   }
 
   updateControls() {

@@ -396,6 +396,26 @@ input:disabled {
   font-weight: 700;
 }
 
+.word-seek-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted-strong);
+  white-space: nowrap;
+}
+
+.word-seek-control input {
+  width: 92px;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #fff;
+  font-weight: 800;
+}
+
 .controls-panel {
   grid-column: 2;
   grid-row: 2;
@@ -693,6 +713,21 @@ textarea::placeholder {
   .file-name,
   .toggle-control {
     width: 100%;
+  }
+
+  .progress-meta {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .word-seek-control {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .word-seek-control input {
+    width: 118px;
   }
 
   .text-field-header,

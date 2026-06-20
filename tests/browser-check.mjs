@@ -63,6 +63,11 @@ try {
   const secondProgressAfter = await second.locator('[data-role="progress-text"]').textContent();
   const wpm = await first.locator('[data-role="wpm-output"]').textContent();
   const displayedWord = await first.locator('[data-role="word-display"]').textContent();
+  const wordSeekMax = await first.locator('[data-role="word-seek"]').getAttribute("max");
+  await first.locator('[data-role="word-seek"]').fill("3");
+  await first.locator('[data-role="word-seek"]').press("Enter");
+  const wordSeekDisplay = await first.locator('[data-role="word-display"]').textContent();
+  const wordSeekProgress = await first.locator('[data-role="progress-text"]').textContent();
   const activeTabsBeforeClose = await page.locator(".reader-tab.is-active").count();
   const firstHidden = await first.getAttribute("hidden");
   const secondHidden = await second.getAttribute("hidden");
@@ -126,6 +131,12 @@ try {
     throw new Error("Word display did not update.");
   }
 
+  if (wordSeekMax !== "8" || wordSeekDisplay !== "three" || wordSeekProgress !== "Word 3 of 8") {
+    throw new Error(
+      `Word number seek failed. Max/progress/display: ${wordSeekMax} / ${wordSeekProgress} / ${wordSeekDisplay}`,
+    );
+  }
+
   if (markdownWord !== "Heading" || !markdownClass?.includes("markdown-heading")) {
     throw new Error(`Markdown word rendering failed. Saw: ${markdownWord} / ${markdownClass}`);
   }
@@ -141,6 +152,7 @@ try {
       secondProgressAfter,
       wpm,
       displayedWord,
+      wordSeekDisplay,
       markdownWord,
       tabCountAfterClose,
     }),

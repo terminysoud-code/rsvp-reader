@@ -15,6 +15,7 @@ A lightweight Rapid Serial Visual Presentation speed-reading app built with vani
 - Pause, resume, reset, and keep your current position.
 - Track progress as both a visual bar and word count.
 - Click the progress bar to jump to any point in the text.
+- Enter a word number to jump directly to that position.
 - Use AI simplify on text already in the editor, with length presets of 10%,
   20%, 30%, 50%, or a custom rounded word target.
 - Use the Caveman mode button to rewrite text into very simple primitive language while
