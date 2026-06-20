@@ -21,9 +21,12 @@ try {
   const readers = page.locator(".reader-instance");
   const first = readers.nth(0);
   const second = readers.nth(1);
+  const tabs = page.locator(".reader-tab");
 
   await first.locator('[data-role="text-input"]').fill("One two three four five six seven eight");
+  await tabs.nth(1).click();
   await second.locator('[data-role="text-input"]').fill("Alpha beta gamma delta epsilon zeta eta theta");
+  await tabs.nth(0).click();
 
   await first.locator('[data-role="start-button"]').click();
   await page.waitForTimeout(250);
@@ -58,6 +61,9 @@ try {
   const secondProgressAfter = await second.locator('[data-role="progress-text"]').textContent();
   const wpm = await first.locator('[data-role="wpm-output"]').textContent();
   const displayedWord = await first.locator('[data-role="word-display"]').textContent();
+  const activeTabsBeforeClose = await page.locator(".reader-tab.is-active").count();
+  const firstHidden = await first.getAttribute("hidden");
+  const secondHidden = await second.getAttribute("hidden");
 
   await first.locator('[data-role="text-input"]').fill("# Heading\nPlain **bold** `code` *italic*");
   await first.locator('[data-role="text-input"]').evaluate((element) => {
@@ -66,6 +72,12 @@ try {
 
   const markdownWord = await first.locator('[data-role="word-display"]').textContent();
   const markdownClass = await first.locator('[data-role="word-display"] span').getAttribute("class");
+
+  await first.locator('[data-role="caveman-toggle"]').check();
+  const cavemanChecked = await first.locator('[data-role="caveman-toggle"]').isChecked();
+
+  await tabs.nth(1).locator(".reader-tab-close").click();
+  const tabCountAfterClose = await page.locator(".reader-tab").count();
 
   if (firstButtonText !== "Stop" || !firstButtonClass?.includes("is-stop")) {
     throw new Error("Start button did not switch to inverted Stop state.");
@@ -77,6 +89,14 @@ try {
 
   if (secondProgressBefore !== secondProgressAfter) {
     throw new Error("Second reader state changed while first reader played.");
+  }
+
+  if (activeTabsBeforeClose !== 1 || firstHidden !== null || secondHidden !== "") {
+    throw new Error("Reader tabs did not keep exactly one visible active reader.");
+  }
+
+  if (tabCountAfterClose !== 1) {
+    throw new Error("Reader tab close button did not remove the inactive reader.");
   }
 
   if (!simplifyEnabled) {
@@ -103,6 +123,10 @@ try {
     throw new Error(`Markdown word rendering failed. Saw: ${markdownWord} / ${markdownClass}`);
   }
 
+  if (!cavemanChecked) {
+    throw new Error("Caveman mode toggle was not usable.");
+  }
+
   if (errors.length) {
     throw new Error(`Browser errors: ${errors.join(" | ")}`);
   }
@@ -115,6 +139,7 @@ try {
       wpm,
       displayedWord,
       markdownWord,
+      tabCountAfterClose,
     }),
   );
 } finally {

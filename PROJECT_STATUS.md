@@ -1,13 +1,13 @@
 # RSVP Reader Project Status
 
-Last updated: 2026-06-20 14:19 UTC
+Last updated: 2026-06-20 15:19 UTC
 
 ## Project Location
 
 - Local workspace: `/home/michael/.openclaw/workspace/rsvp-reader`
 - GitHub repo: `https://github.com/terminysoud-code/rsvp-reader`
 - Active branch: `main`
-- Repo state at update time: clean and pushed to `origin/main`
+- Repo state at update time: local changes pending commit for tabbed readers, DOCX extraction, and Caveman mode
 
 ## Latest Known Commit State
 
@@ -40,6 +40,7 @@ Main files:
 - `api/process-text.js` - Vercel serverless API route for OpenAI or Gemini-backed processing
 - `vercel.json` - production security headers
 - `tests/browser-check.mjs` - local browser smoke test
+- `tests/api-check.mjs` - backend regression test for DOCX extraction and Caveman prompt behavior
 - `tests/manage-samples.mjs` - sample text fixture downloader/manager
 - `tests/live-ai-check.mjs` - live deployed AI integration checker
 
@@ -47,9 +48,10 @@ The frontend no longer contains or requests AI provider keys. The browser calls 
 
 ## Current Features
 
-- Multiple independent RSVP reader instances.
+- Multiple independent RSVP reader instances presented as browser-style tabs.
 - Start button switches to inverted Stop state while reading.
-- Add/remove readers.
+- Add/remove readers through a top tab bar with a plus button and per-tab close x.
+- One active reader is visible at a time.
 - Independent text, file, WPM, progress, seek, and playback state per reader.
 - Markdown-aware flashing word display:
   - strips common Markdown markers from displayed words
@@ -68,8 +70,10 @@ The frontend no longer contains or requests AI provider keys. The browser calls 
   - `.rtf`, `.html`, `.htm`
   - `.json`, `.xml`, `.yaml`, `.yml`
   - relevant text and Office MIME types
+- `.docx` uploads are extracted server-side with `mammoth` before Gemini sees the content.
 - AI simplify button is always visible next to the text editor.
 - AI simplify transforms text already in the editor.
+- Caveman mode rewrites text into primitive, very simple phrasing while preserving the source language where possible.
 - Simplification length controls:
   - 10%, 20%, 30%, 50% of current document
   - custom word count
@@ -267,6 +271,31 @@ Results:
 
 - Live UI smoke test passed, including Markdown heading rendering in the flashing word window.
 - Live Gemini AI test passed after the Markdown display update.
+
+Tabbed readers, DOCX extraction, and Caveman mode update on 2026-06-20:
+
+```bash
+node --check app.js
+node --check api/process-text.js
+node --check tests/api-check.mjs
+node --check tests/browser-check.mjs
+npm run test:api
+npm run test:browser
+npm audit --audit-level=moderate
+```
+
+Results:
+
+- Local API regression passed:
+  - DOCX extraction returns server-readable text without calling Gemini.
+  - Caveman mode sends caveman/language-preserving backend instructions.
+- Local browser smoke passed:
+  - tab add/switch/close behavior
+  - independent reader state
+  - speed/progress controls
+  - Markdown-aware display
+  - Caveman toggle availability
+- `npm audit --audit-level=moderate`: 0 vulnerabilities.
 
 ## Fixture And Live AI Test Tools
 

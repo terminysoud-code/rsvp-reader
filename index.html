@@ -14,21 +14,18 @@
           <h1>RSVP Speed Reader</h1>
           <p id="readerCount">1 reader</p>
         </div>
-        <button id="addReaderButton" class="primary-button" type="button">+ Add reader</button>
       </header>
+
+      <nav class="reader-tabs-bar" aria-label="Reader tabs">
+        <div id="readerTabs" class="reader-tabs" role="tablist" aria-label="Open readers"></div>
+        <button id="addReaderButton" class="tab-add-button" type="button" aria-label="Add reader">+</button>
+      </nav>
 
       <section id="readerGrid" class="reader-grid" aria-label="Reader dashboard"></section>
     </main>
 
     <template id="readerTemplate">
       <article class="reader-instance">
-        <header class="reader-header">
-          <h2 data-role="reader-title">Reader</h2>
-          <button data-role="remove-reader" class="icon-button" type="button" aria-label="Remove reader">
-            Remove
-          </button>
-        </header>
-
         <section class="reader-panel" aria-label="Speed reading display">
           <div data-role="word-display" class="word-display" aria-live="polite">Paste or upload text</div>
           <div class="progress-section">
@@ -101,6 +98,10 @@
             <label class="toggle-control">
               <input data-role="ai-toggle" type="checkbox" />
               <span>AI extraction</span>
+            </label>
+            <label class="toggle-control">
+              <input data-role="caveman-toggle" type="checkbox" />
+              <span>Caveman mode</span>
             </label>
           </div>
 

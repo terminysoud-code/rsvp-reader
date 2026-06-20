@@ -48,11 +48,12 @@ pdfjs.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 
 class LLMService {
-  static async processText({ text, simplify, targetWords }) {
+  static async processText({ text, simplify, targetWords, rewriteMode = "simple" }) {
     return this.request({
       text,
       simplify,
       targetWords,
+      rewriteMode,
     });
   }
 
@@ -119,7 +120,6 @@ class RSVPReader {
     this.isPlaying = false;
     this.elements = this.collectElements();
 
-    this.elements.title.textContent = `Reader ${id}`;
     this.bindEvents();
     this.setWpm(DEFAULT_WPM);
     this.updateProgress();
@@ -130,8 +130,6 @@ class RSVPReader {
     const byRole = (role) => this.root.querySelector(`[data-role="${role}"]`);
 
     return {
-      title: byRole("reader-title"),
-      removeReader: byRole("remove-reader"),
       wordDisplay: byRole("word-display"),
       progressTrack: byRole("progress-track"),
       progressFill: byRole("progress-fill"),
@@ -147,6 +145,7 @@ class RSVPReader {
       fileInput: byRole("file-input"),
       fileName: byRole("file-name"),
       aiToggle: byRole("ai-toggle"),
+      cavemanToggle: byRole("caveman-toggle"),
       simplifyLength: byRole("simplify-length"),
       customLength: byRole("custom-length"),
       simplifyText: byRole("simplify-text"),
@@ -163,7 +162,6 @@ class RSVPReader {
     this.elements.resetButton.addEventListener("click", () => this.reset());
     this.elements.decreaseSpeed.addEventListener("click", () => this.setWpm(this.wpm - WPM_STEP));
     this.elements.increaseSpeed.addEventListener("click", () => this.setWpm(this.wpm + WPM_STEP));
-    this.elements.removeReader.addEventListener("click", () => this.remove());
     this.elements.progressTrack.addEventListener("click", (event) => this.seekToClientX(event.clientX));
     this.elements.progressTrack.addEventListener("keydown", (event) => this.seekWithKeyboard(event));
     this.elements.textInput.addEventListener("input", () => {
@@ -321,7 +319,8 @@ class RSVPReader {
     }
 
     this.pause();
-    this.setStatus("Simplifying with AI...");
+    const isCaveman = this.elements.cavemanToggle.checked;
+    this.setStatus(isCaveman ? "Rewriting in Caveman mode..." : "Simplifying with AI...");
 
     try {
       const targetWords = this.getSimplifyTargetWords(text);
@@ -329,10 +328,11 @@ class RSVPReader {
         text,
         simplify: true,
         targetWords,
+        rewriteMode: isCaveman ? "caveman" : "simple",
       });
 
       this.elements.textInput.value = simplifiedText;
-      this.loadText(simplifiedText, "AI simplified text");
+      this.loadText(simplifiedText, isCaveman ? "Caveman text" : "AI simplified text");
     } catch (error) {
       this.setStatus(error.message, true);
     }
@@ -417,6 +417,14 @@ class RSVPReader {
     this.pause();
     this.root.remove();
     this.onRemove(this);
+  }
+
+  setActive(isActive) {
+    this.root.hidden = !isActive;
+
+    if (!isActive) {
+      this.pause();
+    }
   }
 
   tick() {
@@ -564,10 +572,13 @@ class RSVPReader {
 class ReaderDashboard {
   constructor() {
     this.grid = document.querySelector("#readerGrid");
+    this.tabs = document.querySelector("#readerTabs");
     this.template = document.querySelector("#readerTemplate");
     this.addButton = document.querySelector("#addReaderButton");
     this.readerCount = document.querySelector("#readerCount");
     this.readers = new Map();
+    this.tabsById = new Map();
+    this.activeId = null;
     this.nextId = 1;
 
     this.addButton.addEventListener("click", () => this.addReader());
@@ -587,15 +598,108 @@ class ReaderDashboard {
     this.nextId += 1;
     this.readers.set(id, reader);
     this.grid.append(root);
+    this.tabs.append(this.createTab(reader));
+    this.activateReader(id);
     this.updateDashboard();
   }
 
+  createTab(reader) {
+    const tab = document.createElement("button");
+    tab.className = "reader-tab";
+    tab.type = "button";
+    tab.id = `reader-tab-${reader.id}`;
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-controls", `reader-panel-${reader.id}`);
+
+    const label = document.createElement("span");
+    label.className = "reader-tab-label";
+    label.textContent = `Reader ${reader.id}`;
+
+    const close = document.createElement("span");
+    close.className = "reader-tab-close";
+    close.setAttribute("aria-hidden", "true");
+    close.textContent = "x";
+
+    tab.append(label, close);
+    tab.addEventListener("click", () => this.activateReader(reader.id));
+    tab.addEventListener("keydown", (event) => this.handleTabKeydown(event, reader.id));
+    close.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      if (this.readers.size > 1) {
+        this.removeReader(reader);
+      }
+    });
+
+    reader.root.id = `reader-panel-${reader.id}`;
+    reader.root.setAttribute("role", "tabpanel");
+    reader.root.setAttribute("aria-labelledby", tab.id);
+    this.tabsById.set(reader.id, tab);
+
+    return tab;
+  }
+
+  handleTabKeydown(event, id) {
+    if ((event.key === "Delete" || event.key === "Backspace") && this.readers.size > 1) {
+      event.preventDefault();
+      this.removeReader(this.readers.get(id));
+      return;
+    }
+
+    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+    const ids = [...this.readers.keys()];
+    const currentIndex = ids.indexOf(id);
+    const offset = event.key === "ArrowRight" ? 1 : -1;
+    const nextId = ids[(currentIndex + offset + ids.length) % ids.length];
+    this.activateReader(nextId);
+    this.tabsById.get(nextId)?.focus();
+  }
+
+  activateReader(id) {
+    if (!this.readers.has(id)) {
+      return;
+    }
+
+    this.activeId = id;
+
+    for (const [readerId, reader] of this.readers) {
+      const isActive = readerId === id;
+      const tab = this.tabsById.get(readerId);
+
+      reader.setActive(isActive);
+      tab?.classList.toggle("is-active", isActive);
+      tab?.setAttribute("aria-selected", String(isActive));
+      tab?.setAttribute("tabindex", isActive ? "0" : "-1");
+    }
+  }
+
   removeReader(reader) {
+    if (!reader) {
+      return;
+    }
+
+    const ids = [...this.readers.keys()];
+    const removedIndex = ids.indexOf(reader.id);
+
+    reader.pause();
+    reader.root.remove();
     this.readers.delete(reader.id);
+    this.tabsById.get(reader.id)?.remove();
+    this.tabsById.delete(reader.id);
 
     if (!this.readers.size) {
       this.addReader();
       return;
+    }
+
+    if (this.activeId === reader.id) {
+      const remainingIds = [...this.readers.keys()];
+      const nextIndex = Math.min(Math.max(removedIndex, 0), remainingIds.length - 1);
+      this.activateReader(remainingIds[nextIndex]);
     }
 
     this.updateDashboard();
@@ -605,8 +709,10 @@ class ReaderDashboard {
     const count = this.readers.size;
     this.readerCount.textContent = `${count} ${count === 1 ? "reader" : "readers"}`;
 
-    for (const reader of this.readers.values()) {
-      reader.elements.removeReader.disabled = count === 1;
+    for (const [id, tab] of this.tabsById) {
+      const close = tab.querySelector(".reader-tab-close");
+      tab.setAttribute("aria-label", `Open Reader ${id}`);
+      close?.classList.toggle("is-disabled", count === 1);
     }
   }
 }

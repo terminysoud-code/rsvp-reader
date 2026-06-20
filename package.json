@@ -8,10 +8,14 @@
     "fixtures:clean": "node tests/manage-samples.mjs clean",
     "fixtures:download": "node tests/manage-samples.mjs download",
     "fixtures:list": "node tests/manage-samples.mjs list",
+    "test:api": "node tests/api-check.mjs",
     "test:ai-live": "playwright install chromium && node tests/live-ai-check.mjs",
     "test:browser": "playwright install chromium && node tests/browser-check.mjs"
   },
   "devDependencies": {
     "playwright": "^1.56.0"
+  },
+  "dependencies": {
+    "mammoth": "^1.12.0"
   }
 }

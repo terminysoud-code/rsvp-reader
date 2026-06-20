@@ -6,8 +6,8 @@ A lightweight Rapid Serial Visual Presentation speed-reading app built with vani
 
 - Paste text directly into the reader.
 - Upload `.txt`, `.md`, and `.pdf` files locally.
-- Turn on AI extraction to process broader text-bearing file types, including Office documents.
-- Spawn multiple independent readers on one dashboard.
+- Turn on AI extraction to process broader text-bearing file types, including DOCX documents.
+- Open multiple independent readers as browser-style tabs with a top tab bar.
 - Parse text into a sequential word list while preserving punctuation attached to words.
 - Flash Markdown-aware words without exposing raw Markdown markers for headings,
   emphasis, inline code, quotes, lists, and links.
@@ -17,6 +17,8 @@ A lightweight Rapid Serial Visual Presentation speed-reading app built with vani
 - Click the progress bar to jump to any point in the text.
 - Use AI simplify on text already in the editor, with length presets of 10%,
   20%, 30%, 50%, or a custom rounded word target.
+- Use Caveman mode to rewrite text into very simple primitive language while
+  preserving the document's original language where possible.
 - Responsive layout for desktop and mobile.
 
 ## AI Processing
@@ -28,9 +30,9 @@ Each reader has an AI extraction toggle for uploads and an AI simplify button
 for text already in the editor. Simplification requests include a target length
 rounded to the nearest 100 words. When AI extraction is off, the browser handles
 local `.txt`, `.md`, and `.pdf` parsing. When AI extraction is on, supported
-text-bearing files are sent to the backend as data URLs. Text-like files are
-decoded server-side for extraction, and non-text files are sent to the configured
-AI provider.
+text-bearing files are sent to the backend as data URLs. Text-like files and
+DOCX uploads are decoded server-side for extraction, and remaining non-text
+files are sent to the configured AI provider.
 
 Configure these environment variables in Vercel:
 
@@ -92,6 +94,7 @@ Install dev dependencies and run the browser smoke test:
 
 ```bash
 npm install
+npm run test:api
 npm run test:browser
 ```
 
