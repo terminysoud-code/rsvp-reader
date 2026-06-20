@@ -7,7 +7,7 @@ Last updated: 2026-06-20 15:19 UTC
 - Local workspace: `/home/michael/.openclaw/workspace/rsvp-reader`
 - GitHub repo: `https://github.com/terminysoud-code/rsvp-reader`
 - Active branch: `main`
-- Repo state at update time: local changes pending commit for tabbed readers, DOCX extraction, and Caveman mode
+- Repo state at update time: feature commit pushed to `origin/main`; deployment verified live
 
 ## Latest Known Commit State
 
@@ -26,7 +26,7 @@ a55c1b3 Add multi-reader AI processing pipeline
 a6ca6f8 Toggle primary button while reading
 ```
 
-Current latest pushed commit: `a486257 Harden Vercel deployment security`
+Current latest feature commit: `c5f5707 Add tabbed readers and DOCX extraction`
 
 ## Current App Architecture
 
@@ -128,11 +128,11 @@ Important: do not commit provider keys such as `OPENAI_API_KEY` or `GEMINI_API_K
 Latest GitHub/Vercel production deployment record observed:
 
 ```text
-Deployment id: dpl_CuzHy1FhXvjxKj9KAAfghPDUd1o2
+Deployment id: dpl_CLZ8HGf5R4vPFnLd1xeeak4Bd2FA
 Environment: Production
 State: READY
 Created: 2026-06-20
-URL: https://fastreader-b5b3jrras-jaroska-developers.vercel.app
+URL: https://fastreader-9hvtsijmf-jaroska-developers.vercel.app
 Alias: https://fastreader-omega.vercel.app
 ```
 
@@ -296,6 +296,14 @@ Results:
   - Markdown-aware display
   - Caveman toggle availability
 - `npm audit --audit-level=moderate`: 0 vulnerabilities.
+- Production Vercel deploy completed and aliased to `https://fastreader-omega.vercel.app`.
+- Live production browser smoke passed against `https://fastreader-omega.vercel.app`.
+- Live production Gemini integration passed:
+  - AI simplify returned 1,026 characters.
+  - AI text-file extraction loaded 2,180 words by UI status and 2,186 words by extracted text split.
+- Direct production API probe passed:
+  - DOCX extraction returned expected text.
+  - Caveman mode returned 391 characters from Gemini.
 
 ## Fixture And Live AI Test Tools
 
