@@ -136,7 +136,12 @@ if (cavemanResult.statusCode !== 200 || cavemanResult.payload.text !== "Me make 
   throw new Error(`Caveman rewrite failed: ${JSON.stringify(cavemanResult)}`);
 }
 
-if (!instructions.includes("caveman mode") || !instructions.includes("same language")) {
+if (
+  !instructions.includes("caveman mode") ||
+  !instructions.includes("same language") ||
+  !instructions.includes("Never translate") ||
+  !instructions.includes("maximum 20 words")
+) {
   throw new Error(`Caveman instructions were not applied: ${instructions}`);
 }
 
