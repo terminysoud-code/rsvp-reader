@@ -1,6 +1,6 @@
 # RSVP Reader Project Status
 
-Last updated: 2026-06-20 15:52 UTC
+Last updated: 2026-06-20 16:00 UTC
 
 ## Project Location
 
@@ -76,7 +76,7 @@ The frontend no longer contains or requests AI provider keys. The browser calls 
 - `.docx` uploads are extracted server-side with `mammoth` before Gemini sees the content.
 - AI simplify button is always visible next to the text editor.
 - AI simplify transforms text already in the editor.
-- Caveman mode rewrites text into primitive, very simple phrasing while preserving the source language where possible.
+- Caveman mode is a separate button beside AI simplify and rewrites text into primitive, very simple phrasing while preserving the source language where possible.
 - Simplification length controls:
   - 10%, 20%, 30%, 50% of current document
   - custom word count
@@ -322,6 +322,17 @@ Language-preservation prompt fix on 2026-06-20:
   - German simplify stayed German; first line was `Der Text wurde vereinfacht.`
   - live browser smoke passed against `https://fastreader-omega.vercel.app`
   - security headers confirmed live
+
+AI controls flow patch on 2026-06-20:
+
+- Caveman mode changed from a checkbox/toggle to its own clickable button beside `AI simplify`.
+- Upload toggle label changed to `AI text extraction from document`.
+- Local checks passed:
+  - `node --check app.js`
+  - `node --check tests/browser-check.mjs`
+  - `npm run test:api`
+  - `npm run test:browser`
+  - `npm audit --audit-level=moderate`
 
 ## Fixture And Live AI Test Tools
 

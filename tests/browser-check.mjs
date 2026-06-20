@@ -52,6 +52,8 @@ try {
   await first.locator('[data-role="ai-toggle"]').check();
   const acceptWithAi = await first.locator('[data-role="file-input"]').getAttribute("accept");
   const simplifyEnabled = await first.locator('[data-role="simplify-text"]').isEnabled();
+  const cavemanEnabled = await first.locator('[data-role="caveman-text"]').isEnabled();
+  const extractionLabel = await first.locator(".toggle-control").textContent();
   await first.locator('[data-role="simplify-length"]').selectOption("custom");
   const customLengthVisible = await first.locator('[data-role="custom-length"]').isVisible();
   await first.locator('[data-role="ai-toggle"]').uncheck();
@@ -72,9 +74,6 @@ try {
 
   const markdownWord = await first.locator('[data-role="word-display"]').textContent();
   const markdownClass = await first.locator('[data-role="word-display"] span').getAttribute("class");
-
-  await first.locator('[data-role="caveman-toggle"]').check();
-  const cavemanChecked = await first.locator('[data-role="caveman-toggle"]').isChecked();
 
   await tabs.nth(1).locator(".reader-tab-close").click();
   const tabCountAfterClose = await page.locator(".reader-tab").count();
@@ -103,6 +102,14 @@ try {
     throw new Error("AI simplify button was not available for existing text.");
   }
 
+  if (!cavemanEnabled) {
+    throw new Error("Caveman mode button was not available for existing text.");
+  }
+
+  if (!extractionLabel?.includes("AI text extraction from document")) {
+    throw new Error(`AI extraction label was not updated. Saw: ${extractionLabel}`);
+  }
+
   if (!customLengthVisible) {
     throw new Error("Custom simplification length input was not shown.");
   }
@@ -121,10 +128,6 @@ try {
 
   if (markdownWord !== "Heading" || !markdownClass?.includes("markdown-heading")) {
     throw new Error(`Markdown word rendering failed. Saw: ${markdownWord} / ${markdownClass}`);
-  }
-
-  if (!cavemanChecked) {
-    throw new Error("Caveman mode toggle was not usable.");
   }
 
   if (errors.length) {

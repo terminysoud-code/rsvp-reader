@@ -145,10 +145,10 @@ class RSVPReader {
       fileInput: byRole("file-input"),
       fileName: byRole("file-name"),
       aiToggle: byRole("ai-toggle"),
-      cavemanToggle: byRole("caveman-toggle"),
       simplifyLength: byRole("simplify-length"),
       customLength: byRole("custom-length"),
       simplifyText: byRole("simplify-text"),
+      cavemanText: byRole("caveman-text"),
       statusMessage: byRole("status-message"),
     };
   }
@@ -175,7 +175,8 @@ class RSVPReader {
     this.elements.fileInput.addEventListener("change", () => this.handleFileUpload());
     this.elements.aiToggle.addEventListener("change", () => this.updateAiControls());
     this.elements.simplifyLength.addEventListener("change", () => this.updateSimplifyControls());
-    this.elements.simplifyText.addEventListener("click", () => this.handleSimplifyText());
+    this.elements.simplifyText.addEventListener("click", () => this.handleRewriteText("simple"));
+    this.elements.cavemanText.addEventListener("click", () => this.handleRewriteText("caveman"));
   }
 
   parseWords(text) {
@@ -310,16 +311,21 @@ class RSVPReader {
     throw new Error("Unsupported file type. Upload a .txt, .md, or .pdf file.");
   }
 
-  async handleSimplifyText() {
+  async handleRewriteText(rewriteMode) {
     const text = this.elements.textInput.value.trim();
 
     if (!text) {
-      this.setStatus("Add text before using AI simplify.", true);
+      this.setStatus(
+        rewriteMode === "caveman"
+          ? "Add text before using Caveman mode."
+          : "Add text before using AI simplify.",
+        true,
+      );
       return;
     }
 
     this.pause();
-    const isCaveman = this.elements.cavemanToggle.checked;
+    const isCaveman = rewriteMode === "caveman";
     this.setStatus(isCaveman ? "Rewriting in Caveman mode..." : "Simplifying with AI...");
 
     try {
@@ -328,7 +334,7 @@ class RSVPReader {
         text,
         simplify: true,
         targetWords,
-        rewriteMode: isCaveman ? "caveman" : "simple",
+        rewriteMode,
       });
 
       this.elements.textInput.value = simplifiedText;
@@ -547,6 +553,8 @@ class RSVPReader {
     this.elements.startButton.setAttribute("aria-pressed", String(this.isPlaying));
     this.elements.pauseButton.disabled = !this.isPlaying;
     this.elements.resetButton.disabled = !this.words.length;
+    this.elements.simplifyText.disabled = !this.elements.textInput.value.trim();
+    this.elements.cavemanText.disabled = !this.elements.textInput.value.trim();
     this.elements.decreaseSpeed.disabled = this.wpm <= MIN_WPM;
     this.elements.increaseSpeed.disabled = this.wpm >= MAX_WPM;
   }
