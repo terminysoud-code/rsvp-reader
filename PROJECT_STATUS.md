@@ -1,6 +1,6 @@
 # RSVP Reader Project Status
 
-Last updated: 2026-06-20 15:19 UTC
+Last updated: 2026-06-20 15:52 UTC
 
 ## Project Location
 
@@ -26,7 +26,10 @@ a55c1b3 Add multi-reader AI processing pipeline
 a6ca6f8 Toggle primary button while reading
 ```
 
-Current latest feature commit: `c5f5707 Add tabbed readers and DOCX extraction`
+Current latest feature commits:
+
+- `5dc9138 Preserve source language in AI rewrites`
+- `c5f5707 Add tabbed readers and DOCX extraction`
 
 ## Current App Architecture
 
@@ -128,11 +131,11 @@ Important: do not commit provider keys such as `OPENAI_API_KEY` or `GEMINI_API_K
 Latest GitHub/Vercel production deployment record observed:
 
 ```text
-Deployment id: dpl_CLZ8HGf5R4vPFnLd1xeeak4Bd2FA
+Deployment id: dpl_FrwJX2WonxM9zYfPCqmPHPbd53W8
 Environment: Production
 State: READY
 Created: 2026-06-20
-URL: https://fastreader-9hvtsijmf-jaroska-developers.vercel.app
+URL: https://fastreader-c23zh99je-jaroska-developers.vercel.app
 Alias: https://fastreader-omega.vercel.app
 ```
 
@@ -304,6 +307,21 @@ Results:
 - Direct production API probe passed:
   - DOCX extraction returned expected text.
   - Caveman mode returned 391 characters from Gemini.
+
+Language-preservation prompt fix on 2026-06-20:
+
+- Simplify and Caveman mode now instruct the model to keep the document's source language and never translate during extraction/rewrite.
+- Simplification explanation is constrained to one short same-language sentence, maximum 20 words.
+- Local checks passed:
+  - `node --check api/process-text.js`
+  - `node --check tests/api-check.mjs`
+  - `npm run test:api`
+  - `npm run test:browser`
+  - `npm audit --audit-level=moderate`
+- Production checks passed:
+  - German simplify stayed German; first line was `Der Text wurde vereinfacht.`
+  - live browser smoke passed against `https://fastreader-omega.vercel.app`
+  - security headers confirmed live
 
 ## Fixture And Live AI Test Tools
 
