@@ -72,13 +72,22 @@ try {
   const firstHidden = await first.getAttribute("hidden");
   const secondHidden = await second.getAttribute("hidden");
 
-  await first.locator('[data-role="text-input"]').fill("# Heading\nPlain **bold** `code` *italic*");
+  await first
+    .locator('[data-role="text-input"]')
+    .fill("# Heading\n---\n| Term | Value |\n| --- | --- |\n| Speed | Fast |\nPlain **bold** `code` *italic*");
   await first.locator('[data-role="text-input"]').evaluate((element) => {
     element.dispatchEvent(new Event("change", { bubbles: true }));
   });
 
   const markdownWord = await first.locator('[data-role="word-display"]').textContent();
   const markdownClass = await first.locator('[data-role="word-display"] span').getAttribute("class");
+  const markdownProgress = await first.locator('[data-role="progress-text"]').textContent();
+  await first.locator('[data-role="word-seek"]').fill("2");
+  await first.locator('[data-role="word-seek"]').press("Enter");
+  const markdownTableWord = await first.locator('[data-role="word-display"]').textContent();
+  await first.locator('[data-role="word-seek"]').fill("4");
+  await first.locator('[data-role="word-seek"]').press("Enter");
+  const markdownTableValue = await first.locator('[data-role="word-display"]').textContent();
 
   await tabs.nth(1).locator(".reader-tab-close").click();
   const tabCountAfterClose = await page.locator(".reader-tab").count();
@@ -139,6 +148,16 @@ try {
 
   if (markdownWord !== "Heading" || !markdownClass?.includes("markdown-heading")) {
     throw new Error(`Markdown word rendering failed. Saw: ${markdownWord} / ${markdownClass}`);
+  }
+
+  if (
+    markdownProgress !== "Word 1 of 9" ||
+    markdownTableWord !== "Term" ||
+    markdownTableValue !== "Speed"
+  ) {
+    throw new Error(
+      `Markdown structure filtering failed. Saw: ${markdownProgress} / ${markdownTableWord} / ${markdownTableValue}`,
+    );
   }
 
   if (errors.length) {

@@ -1,6 +1,6 @@
 # RSVP Reader Project Status
 
-Last updated: 2026-06-20 16:13 UTC
+Last updated: 2026-06-20 18:07 UTC
 
 ## Project Location
 
@@ -59,6 +59,8 @@ The frontend no longer contains or requests AI provider keys. The browser calls 
 - Word-number seek input lets the user jump directly to a specific word position.
 - Markdown-aware flashing word display:
   - strips common Markdown markers from displayed words
+  - skips structural Markdown/table particles such as horizontal rules, table divider rows, and standalone pipes
+  - turns Markdown table rows into readable cell text instead of flashing pipe characters
   - styles headings, bold, italic, inline code, blockquotes, lists, and strikethrough
   - renders with DOM nodes and `textContent`, not `innerHTML`
 - Standard local file parsing when AI extraction is off:

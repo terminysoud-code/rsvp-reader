@@ -203,6 +203,18 @@ class RSVPReader {
       return [];
     }
 
+    if (this.isMarkdownStructureLine(source)) {
+      return [];
+    }
+
+    if (this.isMarkdownTableRow(source)) {
+      source = this.normalizeMarkdownTableRow(source);
+
+      if (!source) {
+        return [];
+      }
+    }
+
     const headingMatch = /^(#{1,6})\s+/.exec(source);
 
     if (headingMatch) {
@@ -223,12 +235,42 @@ class RSVPReader {
     return this.parseInlineMarkdown(source, blockStyles);
   }
 
+  isMarkdownStructureLine(source) {
+    const compact = source.replace(/\s+/g, "");
+
+    return (
+      /^[-*_]{3,}$/.test(compact) ||
+      /^\|?[:\-|]+?\|?$/.test(compact) ||
+      /^[|+\-=_:.,;]+$/.test(compact)
+    );
+  }
+
+  isMarkdownTableRow(source) {
+    return source.includes("|") && !/`[^`]*\|[^`]*`/.test(source);
+  }
+
+  normalizeMarkdownTableRow(source) {
+    const cells = source
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((cell) => cell.trim())
+      .filter(Boolean);
+
+    if (!cells.length || cells.every((cell) => /^:?-{3,}:?$/.test(cell))) {
+      return "";
+    }
+
+    return cells.join(" ");
+  }
+
   parseInlineMarkdown(source, blockStyles) {
     const activeStyles = new Set();
 
     return source
       .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/\s+\|\s+/g, " ")
       .split(/\s+/)
       .map((rawWord) => {
         let text = rawWord;
@@ -258,10 +300,17 @@ class RSVPReader {
         }
 
         return {
-          text: text.replace(/^[([]+|[\])]+$/g, ""),
+          text: this.cleanMarkdownWord(text),
           styles: [...wordStyles],
         };
-      });
+      })
+      .filter((token) => token.text);
+  }
+
+  cleanMarkdownWord(text) {
+    return text
+      .replace(/^[\s|()[\]{}<>]+|[\s|()[\]{}<>]+$/g, "")
+      .replace(/^[-*_~`#=:+|]+$|^[.,;:!?]+$/g, "");
   }
 
   loadText(text, sourceLabel = "Text loaded") {
