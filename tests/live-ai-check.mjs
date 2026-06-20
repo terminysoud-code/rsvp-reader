@@ -34,9 +34,9 @@ page.on("response", async (response) => {
   apiErrors.push(payload?.error || `AI API returned HTTP ${response.status()}`);
 });
 
-async function waitForAiStep(page, predicate, label) {
+async function waitForAiStep(page, statusPattern, label) {
   await page.waitForFunction(
-    ({ predicateSource, label }) => {
+    ({ label, statusPattern }) => {
       const status = document.querySelector('[data-role="status-message"]')?.textContent || "";
       const hasError = document.querySelector('[data-role="status-message"]')?.classList.contains("error");
 
@@ -44,9 +44,9 @@ async function waitForAiStep(page, predicate, label) {
         throw new Error(`${label} failed: ${status}`);
       }
 
-      return Function(`return (${predicateSource})`)()(status);
+      return new RegExp(statusPattern).test(status);
     },
-    { predicateSource: predicate.toString(), label },
+    { label, statusPattern: statusPattern.source },
     { timeout: TIMEOUT_MS },
   );
 }
@@ -73,11 +73,7 @@ try {
   await reader.locator('[data-role="simplify-text"]').click();
   await waitForAiStep(
     page,
-    () => {
-      const textarea = document.querySelector('[data-role="text-input"]');
-      const status = document.querySelector('[data-role="status-message"]')?.textContent || "";
-      return textarea && /AI simplified text: .* words\./.test(status);
-    },
+    /AI simplified text: .* words\./,
     "AI simplify",
   );
 
@@ -87,10 +83,7 @@ try {
   await reader.locator('[data-role="file-input"]').setInputFiles(samplePath);
   await waitForAiStep(
     page,
-    () => {
-      const status = document.querySelector('[data-role="status-message"]')?.textContent || "";
-      return /alice-chapter-1\.txt: .* words\./.test(status);
-    },
+    /alice-chapter-1\.txt: .* words\./,
     "AI extraction",
   );
 

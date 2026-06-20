@@ -1,6 +1,6 @@
 # RSVP Reader Project Status
 
-Last updated: 2026-06-20 13:08 UTC
+Last updated: 2026-06-20 13:42 UTC
 
 ## Project Location
 
@@ -14,6 +14,7 @@ Last updated: 2026-06-20 13:08 UTC
 Recent commits, newest first:
 
 ```text
+393417d Add Gemini AI provider support
 61b9e93 Add live AI fixture tooling
 bfef738 Add simplification length controls
 c9acbf0 Add AI extraction and simplify action
@@ -24,7 +25,7 @@ a55c1b3 Add multi-reader AI processing pipeline
 a6ca6f8 Toggle primary button while reading
 ```
 
-Current latest pushed commit: `61b9e93 Add live AI fixture tooling`
+Current latest pushed commit before this hardening pass: `393417d Add Gemini AI provider support`
 
 ## Current App Architecture
 
@@ -36,6 +37,7 @@ Main files:
 - `styles.css` - polished one-screen split workspace layout
 - `app.js` - frontend reader logic, multi-reader state, file parsing, AI controls
 - `api/process-text.js` - Vercel serverless API route for OpenAI or Gemini-backed processing
+- `vercel.json` - production security headers
 - `tests/browser-check.mjs` - local browser smoke test
 - `tests/manage-samples.mjs` - sample text fixture downloader/manager
 - `tests/live-ai-check.mjs` - live deployed AI integration checker
@@ -77,6 +79,11 @@ The frontend no longer contains or requests AI provider keys. The browser calls 
   - text size limit
   - file size limit
   - lightweight per-instance rate limit
+- Production security headers:
+  - Content Security Policy
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - restrictive Permissions Policy
 
 ## Vercel Environment Variables
 
@@ -112,15 +119,15 @@ Important: do not commit provider keys such as `OPENAI_API_KEY` or `GEMINI_API_K
 Latest GitHub/Vercel production deployment record observed:
 
 ```text
-Deployment id: dpl_HVT2UnmjMK5sA5hovU2c28u7TZW3
+Deployment id: dpl_CuzHy1FhXvjxKj9KAAfghPDUd1o2
 Environment: Production
 State: READY
 Created: 2026-06-20
-URL: https://fastreader-2y6j2huyn-jaroska-developers.vercel.app
+URL: https://fastreader-b5b3jrras-jaroska-developers.vercel.app
 Alias: https://fastreader-omega.vercel.app
 ```
 
-Known deployment/access issue:
+Historical deployment/access issue:
 
 - The commit-specific Vercel deployment URLs tested from this machine still returned Vercel Authentication.
 - Public aliases checked earlier, including `https://fastreader.vercel.app`, were reachable but did not appear to serve the current RSVP app/API.
@@ -149,9 +156,8 @@ Google access check on 2026-06-20:
 - `gog` has Google Workspace OAuth for `terminysoud@gmail.com`, but that is not enough to create an AI Studio/Gemini API key non-interactively.
 - Boss provided a Gemini key and it was stored as a sensitive Vercel Production env var.
 
-Next steps:
+Recommended later:
 
-- Commit/push the Gemini provider code if Boss wants the GitHub repo to match the deployed production state.
 - Optionally rotate the Gemini key later because it was shared through chat; do not record the key value in files.
 
 ## Verification Completed
@@ -219,8 +225,28 @@ APP_URL=https://fastreader-omega.vercel.app npm run test:ai-live
 Observed passing output:
 
 ```json
-{"ok":true,"appUrl":"https://fastreader-omega.vercel.app","simplifiedChars":1317,"extractedWords":2186,"status":"alice-chapter-1.txt: 2,186 words."}
+{"ok":true,"appUrl":"https://fastreader-omega.vercel.app","simplifiedChars":1119,"extractedWords":2186,"status":"alice-chapter-1.txt: 2,186 words."}
 ```
+
+Security hardening pass on 2026-06-20:
+
+```bash
+npm audit --json
+node --check app.js
+node --check api/process-text.js
+node --check tests/browser-check.mjs
+node --check tests/manage-samples.mjs
+node --check tests/live-ai-check.mjs
+npm run test:browser
+APP_URL=https://fastreader-omega.vercel.app npm run test:ai-live
+```
+
+Results:
+
+- `npm audit` reported 0 vulnerabilities.
+- No committed provider key values were found in the repo scan.
+- CSP and related headers are present on `https://fastreader-omega.vercel.app/`.
+- Live AI test passes under the deployed CSP; the test no longer uses dynamic `Function(...)`.
 
 ## Fixture And Live AI Test Tools
 
