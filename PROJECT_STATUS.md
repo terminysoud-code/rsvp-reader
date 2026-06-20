@@ -14,6 +14,7 @@ Last updated: 2026-06-20 13:42 UTC
 Recent commits, newest first:
 
 ```text
+a486257 Harden Vercel deployment security
 393417d Add Gemini AI provider support
 61b9e93 Add live AI fixture tooling
 bfef738 Add simplification length controls
@@ -25,7 +26,7 @@ a55c1b3 Add multi-reader AI processing pipeline
 a6ca6f8 Toggle primary button while reading
 ```
 
-Current latest pushed commit before this hardening pass: `393417d Add Gemini AI provider support`
+Current latest pushed commit: `a486257 Harden Vercel deployment security`
 
 ## Current App Architecture
 
@@ -225,7 +226,7 @@ APP_URL=https://fastreader-omega.vercel.app npm run test:ai-live
 Observed passing output:
 
 ```json
-{"ok":true,"appUrl":"https://fastreader-omega.vercel.app","simplifiedChars":1119,"extractedWords":2186,"status":"alice-chapter-1.txt: 2,186 words."}
+{"ok":true,"appUrl":"https://fastreader-omega.vercel.app","simplifiedChars":1141,"extractedWords":2186,"status":"alice-chapter-1.txt: 2,186 words."}
 ```
 
 Security hardening pass on 2026-06-20:
