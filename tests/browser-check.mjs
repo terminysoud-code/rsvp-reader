@@ -59,6 +59,14 @@ try {
   const wpm = await first.locator('[data-role="wpm-output"]').textContent();
   const displayedWord = await first.locator('[data-role="word-display"]').textContent();
 
+  await first.locator('[data-role="text-input"]').fill("# Heading\nPlain **bold** `code` *italic*");
+  await first.locator('[data-role="text-input"]').evaluate((element) => {
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  const markdownWord = await first.locator('[data-role="word-display"]').textContent();
+  const markdownClass = await first.locator('[data-role="word-display"] span').getAttribute("class");
+
   if (firstButtonText !== "Stop" || !firstButtonClass?.includes("is-stop")) {
     throw new Error("Start button did not switch to inverted Stop state.");
   }
@@ -91,6 +99,10 @@ try {
     throw new Error("Word display did not update.");
   }
 
+  if (markdownWord !== "Heading" || !markdownClass?.includes("markdown-heading")) {
+    throw new Error(`Markdown word rendering failed. Saw: ${markdownWord} / ${markdownClass}`);
+  }
+
   if (errors.length) {
     throw new Error(`Browser errors: ${errors.join(" | ")}`);
   }
@@ -102,6 +114,7 @@ try {
       secondProgressAfter,
       wpm,
       displayedWord,
+      markdownWord,
     }),
   );
 } finally {

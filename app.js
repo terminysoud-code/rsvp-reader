@@ -35,6 +35,14 @@ const AI_ACCEPT = [
 ].join(",");
 const MAX_AI_FILE_BYTES = 3_500_000;
 const LENGTH_PRESETS = new Set(["10", "20", "30", "50"]);
+const INLINE_MARKERS = [
+  { marker: "**", style: "bold" },
+  { marker: "__", style: "bold" },
+  { marker: "~~", style: "strike" },
+  { marker: "`", style: "code" },
+  { marker: "*", style: "italic" },
+  { marker: "_", style: "italic" },
+];
 
 pdfjs.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
@@ -174,10 +182,78 @@ class RSVPReader {
 
   parseWords(text) {
     return text
-      .replace(/\s+/g, " ")
-      .trim()
-      .split(" ")
-      .filter(Boolean);
+      .split(/\r?\n/)
+      .flatMap((line) => this.parseMarkdownLine(line))
+      .filter((token) => token.text);
+  }
+
+  parseMarkdownLine(line) {
+    let source = line.trim();
+    const blockStyles = [];
+
+    if (!source) {
+      return [];
+    }
+
+    const headingMatch = /^(#{1,6})\s+/.exec(source);
+
+    if (headingMatch) {
+      blockStyles.push("heading");
+      source = source.slice(headingMatch[0].length).trim();
+    }
+
+    if (source.startsWith(">")) {
+      blockStyles.push("quote");
+      source = source.replace(/^>\s*/, "");
+    }
+
+    if (/^([-*+]|\d+\.)\s+/.test(source)) {
+      blockStyles.push("list");
+      source = source.replace(/^([-*+]|\d+\.)\s+/, "");
+    }
+
+    return this.parseInlineMarkdown(source, blockStyles);
+  }
+
+  parseInlineMarkdown(source, blockStyles) {
+    const activeStyles = new Set();
+
+    return source
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .split(/\s+/)
+      .map((rawWord) => {
+        let text = rawWord;
+        const wordStyles = new Set(blockStyles);
+
+        for (const { marker, style } of INLINE_MARKERS) {
+          if (text.startsWith(marker) && text.length > marker.length) {
+            activeStyles.add(style);
+            text = text.slice(marker.length);
+          }
+        }
+
+        for (const style of activeStyles) {
+          wordStyles.add(style);
+        }
+
+        for (const { marker, style } of INLINE_MARKERS) {
+          const punctuationMatch = /[.,;:!?)]*$/.exec(text);
+          const punctuation = punctuationMatch?.[0] || "";
+          const coreEnd = text.length - punctuation.length;
+
+          if (coreEnd > marker.length && text.slice(0, coreEnd).endsWith(marker)) {
+            text = `${text.slice(0, coreEnd - marker.length)}${punctuation}`;
+            wordStyles.add(style);
+            activeStyles.delete(style);
+          }
+        }
+
+        return {
+          text: text.replace(/^[([]+|[\])]+$/g, ""),
+          styles: [...wordStyles],
+        };
+      });
   }
 
   loadText(text, sourceLabel = "Text loaded") {
@@ -186,10 +262,10 @@ class RSVPReader {
     this.currentIndex = 0;
 
     if (!this.words.length) {
-      this.elements.wordDisplay.textContent = "Paste or upload text";
+      this.renderWordDisplay("Paste or upload text");
       this.setStatus("No readable words found.", true);
     } else {
-      this.elements.wordDisplay.textContent = this.words[0];
+      this.renderWordDisplay(this.words[0]);
       this.setStatus(`${sourceLabel}: ${this.words.length.toLocaleString()} words.`);
     }
 
@@ -333,7 +409,7 @@ class RSVPReader {
   reset() {
     this.pause();
     this.currentIndex = 0;
-    this.elements.wordDisplay.textContent = this.words[0] || "Paste or upload text";
+    this.renderWordDisplay(this.words[0] || "Paste or upload text");
     this.updateProgress();
   }
 
@@ -352,14 +428,14 @@ class RSVPReader {
 
     if (this.currentIndex >= this.words.length) {
       this.pause();
-      this.elements.wordDisplay.textContent = "Done";
+      this.renderWordDisplay("Done");
       this.currentIndex = this.words.length;
       this.updateProgress();
       this.setStatus("Finished.");
       return;
     }
 
-    this.elements.wordDisplay.textContent = this.words[this.currentIndex];
+    this.renderWordDisplay(this.words[this.currentIndex]);
     this.currentIndex += 1;
     this.updateProgress();
     this.timerId = window.setTimeout(() => this.tick(), 60000 / this.wpm);
@@ -394,7 +470,7 @@ class RSVPReader {
     const rect = this.elements.progressTrack.getBoundingClientRect();
     const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
     this.currentIndex = Math.min(this.words.length - 1, Math.floor(ratio * this.words.length));
-    this.elements.wordDisplay.textContent = this.words[this.currentIndex];
+    this.renderWordDisplay(this.words[this.currentIndex]);
     this.updateProgress();
 
     if (this.isPlaying) {
@@ -419,8 +495,29 @@ class RSVPReader {
       this.words.length - 1,
       Math.max(0, this.currentIndex + direction * jump),
     );
-    this.elements.wordDisplay.textContent = this.words[this.currentIndex];
+    this.renderWordDisplay(this.words[this.currentIndex]);
     this.updateProgress();
+  }
+
+  renderWordDisplay(word) {
+    this.elements.wordDisplay.replaceChildren();
+
+    if (typeof word === "string") {
+      this.elements.wordDisplay.textContent = word;
+      this.elements.wordDisplay.className = "word-display";
+      return;
+    }
+
+    const span = document.createElement("span");
+    span.textContent = word.text;
+    span.classList.add("markdown-word");
+
+    for (const style of word.styles) {
+      span.classList.add(`markdown-${style}`);
+    }
+
+    this.elements.wordDisplay.className = "word-display has-markdown";
+    this.elements.wordDisplay.append(span);
   }
 
   updateProgress() {

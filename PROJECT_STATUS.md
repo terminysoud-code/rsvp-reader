@@ -1,6 +1,6 @@
 # RSVP Reader Project Status
 
-Last updated: 2026-06-20 13:42 UTC
+Last updated: 2026-06-20 14:19 UTC
 
 ## Project Location
 
@@ -51,6 +51,10 @@ The frontend no longer contains or requests AI provider keys. The browser calls 
 - Start button switches to inverted Stop state while reading.
 - Add/remove readers.
 - Independent text, file, WPM, progress, seek, and playback state per reader.
+- Markdown-aware flashing word display:
+  - strips common Markdown markers from displayed words
+  - styles headings, bold, italic, inline code, blockquotes, lists, and strikethrough
+  - renders with DOM nodes and `textContent`, not `innerHTML`
 - Standard local file parsing when AI extraction is off:
   - `.txt`
   - `.md`
@@ -248,6 +252,21 @@ Results:
 - No committed provider key values were found in the repo scan.
 - CSP and related headers are present on `https://fastreader-omega.vercel.app/`.
 - Live AI test passes under the deployed CSP; the test no longer uses dynamic `Function(...)`.
+
+Markdown display update on 2026-06-20:
+
+```bash
+node --check app.js
+node --check api/process-text.js
+node --check tests/browser-check.mjs
+APP_URL=https://fastreader-omega.vercel.app npm run test:browser
+APP_URL=https://fastreader-omega.vercel.app npm run test:ai-live
+```
+
+Results:
+
+- Live UI smoke test passed, including Markdown heading rendering in the flashing word window.
+- Live Gemini AI test passed after the Markdown display update.
 
 ## Fixture And Live AI Test Tools
 

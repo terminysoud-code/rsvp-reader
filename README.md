@@ -9,6 +9,8 @@ A lightweight Rapid Serial Visual Presentation speed-reading app built with vani
 - Turn on AI extraction to process broader text-bearing file types, including Office documents.
 - Spawn multiple independent readers on one dashboard.
 - Parse text into a sequential word list while preserving punctuation attached to words.
+- Flash Markdown-aware words without exposing raw Markdown markers for headings,
+  emphasis, inline code, quotes, lists, and links.
 - Read at 400 WPM by default, with speed controls from 100 to 1200 WPM.
 - Pause, resume, reset, and keep your current position.
 - Track progress as both a visual bar and word count.
